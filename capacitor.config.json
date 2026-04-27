@@ -1,0 +1,26 @@
+{
+  "appId": "hk.istars.s",
+  "appName": "星進教育 i-STAR Education",
+  "webDir": "www",
+  "server": {
+    "url": "https://s.istars.hk/app/index.php",
+    "cleartext": false
+  },
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "backgroundColor": "#1AABE0",
+      "androidSplashResourceName": "splash",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "LIGHT",
+      "backgroundColor": "#1AABE0"
+    }
+  }
+}
