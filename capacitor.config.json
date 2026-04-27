@@ -9,7 +9,9 @@
   "android": {
     "allowMixedContent": false,
     "captureInput": true,
-    "webContentsDebuggingEnabled": false
+    "webContentsDebuggingEnabled": false,
+    "backgroundColor": "#FFFFFF",
+    "overrideUserAgent": "iSTAR-App/1.0 Android"
   },
   "plugins": {
     "SplashScreen": {
