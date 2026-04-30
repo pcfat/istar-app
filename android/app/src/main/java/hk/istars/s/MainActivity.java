@@ -1,8 +1,8 @@
 package hk.istars.s;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.getcapacitor.BridgeActivity;
 import com.google.firebase.messaging.FirebaseMessaging;
@@ -10,7 +10,6 @@ import com.google.firebase.messaging.FirebaseMessaging;
 public class MainActivity extends BridgeActivity {
 
     private SwipeRefreshLayout swipeRefreshLayout;
-    private String pendingFcmToken = null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -32,30 +31,32 @@ public class MainActivity extends BridgeActivity {
             });
         }
 
-        // Get FCM token
+        // Get FCM token and inject after 5 second delay (page should be loaded by then)
         FirebaseMessaging.getInstance().getToken()
             .addOnCompleteListener(task -> {
                 if (!task.isSuccessful() || task.getResult() == null) return;
-                pendingFcmToken = task.getResult();
-                injectFcmToken();
+                String token = task.getResult().replace("'", "\\'");
+                
+                // Try injecting multiple times to ensure page is loaded
+                Handler handler = new Handler(getMainLooper());
+                Runnable inject = new Runnable() {
+                    int attempts = 0;
+                    @Override
+                    public void run() {
+                        attempts++;
+                        WebView webView = getBridge().getWebView();
+                        if (webView != null) {
+                            String js = "if(typeof window.__registerFCMToken==='function'){window.__registerFCMToken('" + token + "');}";
+                            webView.evaluateJavascript(js, result -> {
+                                // result is "null" if function not found, keep trying
+                                if ((result == null || result.equals("null") || result.equals("undefined")) && attempts < 10) {
+                                    handler.postDelayed(this, 2000);
+                                }
+                            });
+                        }
+                    }
+                };
+                handler.postDelayed(inject, 3000); // Start after 3 seconds
             });
-
-        // Set WebViewClient to inject token after page loads
-        getBridge().getWebView().setWebViewClient(new WebViewClient() {
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
-                injectFcmToken();
-            }
-        });
-    }
-
-    private void injectFcmToken() {
-        if (pendingFcmToken == null) return;
-        WebView webView = getBridge().getWebView();
-        if (webView == null) return;
-        String token = pendingFcmToken.replace("'", "\\'");
-        String js = "if(typeof window.__registerFCMToken === 'function') { window.__registerFCMToken('" + token + "'); }";
-        webView.post(() -> webView.evaluateJavascript(js, null));
     }
 }
