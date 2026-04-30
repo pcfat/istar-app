@@ -2,6 +2,7 @@ package hk.istars.s;
 
 import android.os.Bundle;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.getcapacitor.BridgeActivity;
 import com.google.firebase.messaging.FirebaseMessaging;
@@ -9,6 +10,7 @@ import com.google.firebase.messaging.FirebaseMessaging;
 public class MainActivity extends BridgeActivity {
 
     private SwipeRefreshLayout swipeRefreshLayout;
+    private String pendingFcmToken = null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -30,18 +32,30 @@ public class MainActivity extends BridgeActivity {
             });
         }
 
-        // Get FCM token and pass to WebView
+        // Get FCM token
         FirebaseMessaging.getInstance().getToken()
             .addOnCompleteListener(task -> {
-                if (!task.isSuccessful()) return;
-                String token = task.getResult();
-                if (token == null) return;
-
-                // Inject token into WebView for server registration
-                getBridge().getWebView().post(() -> {
-                    String js = "if(window.__registerFCMToken)window.__registerFCMToken('" + token.replace("'", "\\'") + "');";
-                    getBridge().getWebView().evaluateJavascript(js, null);
-                });
+                if (!task.isSuccessful() || task.getResult() == null) return;
+                pendingFcmToken = task.getResult();
+                injectFcmToken();
             });
+
+        // Set WebViewClient to inject token after page loads
+        getBridge().getWebView().setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                injectFcmToken();
+            }
+        });
+    }
+
+    private void injectFcmToken() {
+        if (pendingFcmToken == null) return;
+        WebView webView = getBridge().getWebView();
+        if (webView == null) return;
+        String token = pendingFcmToken.replace("'", "\\'");
+        String js = "if(typeof window.__registerFCMToken === 'function') { window.__registerFCMToken('" + token + "'); }";
+        webView.post(() -> webView.evaluateJavascript(js, null));
     }
 }
