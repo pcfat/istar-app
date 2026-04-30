@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.webkit.WebView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.getcapacitor.BridgeActivity;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 public class MainActivity extends BridgeActivity {
 
@@ -15,7 +16,6 @@ public class MainActivity extends BridgeActivity {
 
         swipeRefreshLayout = findViewById(R.id.swipe_refresh);
         if (swipeRefreshLayout != null) {
-            // Set refresh indicator colors
             swipeRefreshLayout.setColorSchemeResources(
                 android.R.color.holo_blue_bright,
                 android.R.color.holo_blue_light
@@ -26,9 +26,22 @@ public class MainActivity extends BridgeActivity {
                 if (webView != null) {
                     webView.reload();
                 }
-                // Stop the refresh animation after a short delay
                 swipeRefreshLayout.postDelayed(() -> swipeRefreshLayout.setRefreshing(false), 1500);
             });
         }
+
+        // Get FCM token and pass to WebView
+        FirebaseMessaging.getInstance().getToken()
+            .addOnCompleteListener(task -> {
+                if (!task.isSuccessful()) return;
+                String token = task.getResult();
+                if (token == null) return;
+
+                // Inject token into WebView for server registration
+                getBridge().getWebView().post(() -> {
+                    String js = "if(window.__registerFCMToken)window.__registerFCMToken('" + token.replace("'", "\\'") + "');";
+                    getBridge().getWebView().evaluateJavascript(js, null);
+                });
+            });
     }
 }
