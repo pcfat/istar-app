@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">星進教育</string>
-    <string name="title_activity_main">星進教育</string>
+    <string name="app_name">i-STAR</string>
+    <string name="title_activity_main">i-STAR</string>
     <string name="package_name">hk.istars.s</string>
     <string name="custom_url_scheme">hk.istars.s</string>
 </resources>
