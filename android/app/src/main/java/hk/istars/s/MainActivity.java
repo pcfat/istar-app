@@ -2,7 +2,10 @@ package hk.istars.s;
 
 import android.os.Bundle;
 import android.os.Handler;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceError;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.getcapacitor.BridgeActivity;
 import com.google.firebase.messaging.FirebaseMessaging;
@@ -31,13 +34,28 @@ public class MainActivity extends BridgeActivity {
             });
         }
 
-        // Get FCM token and inject after 5 second delay (page should be loaded by then)
+        // Override WebViewClient to handle errors
+        getBridge().getWebView().setWebViewClient(new WebViewClient() {
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                // Only handle main frame errors
+                if (request.isForMainFrame()) {
+                    view.loadUrl("file:///android_asset/public/error.html");
+                }
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                injectFcmToken(view);
+            }
+        });
+
+        // Get FCM token
         FirebaseMessaging.getInstance().getToken()
             .addOnCompleteListener(task -> {
                 if (!task.isSuccessful() || task.getResult() == null) return;
                 String token = task.getResult().replace("'", "\\'");
-                
-                // Try injecting multiple times to ensure page is loaded
                 Handler handler = new Handler(getMainLooper());
                 Runnable inject = new Runnable() {
                     int attempts = 0;
@@ -48,7 +66,6 @@ public class MainActivity extends BridgeActivity {
                         if (webView != null) {
                             String js = "if(typeof window.__registerFCMToken==='function'){window.__registerFCMToken('" + token + "');}";
                             webView.evaluateJavascript(js, result -> {
-                                // result is "null" if function not found, keep trying
                                 if ((result == null || result.equals("null") || result.equals("undefined")) && attempts < 10) {
                                     handler.postDelayed(this, 2000);
                                 }
@@ -56,7 +73,17 @@ public class MainActivity extends BridgeActivity {
                         }
                     }
                 };
-                handler.postDelayed(inject, 3000); // Start after 3 seconds
+                handler.postDelayed(inject, 3000);
+            });
+    }
+
+    private void injectFcmToken(WebView view) {
+        FirebaseMessaging.getInstance().getToken()
+            .addOnCompleteListener(task -> {
+                if (!task.isSuccessful() || task.getResult() == null) return;
+                String token = task.getResult().replace("'", "\\'");
+                String js = "if(typeof window.__registerFCMToken==='function'){window.__registerFCMToken('" + token + "');}";
+                view.post(() -> view.evaluateJavascript(js, null));
             });
     }
 }
