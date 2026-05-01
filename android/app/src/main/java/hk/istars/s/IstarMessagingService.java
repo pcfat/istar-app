@@ -1,69 +1,67 @@
 package hk.istars.s;
 
-import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
-import android.os.IBinder;
-import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import com.google.firebase.messaging.FirebaseMessagingService;
+import com.google.firebase.messaging.RemoteMessage;
 
-public class IstarMessagingService extends Service {
+public class IstarMessagingService extends FirebaseMessagingService {
 
     private static final String CHANNEL_ID = "istar_notifications";
     private static final String CHANNEL_NAME = "星進教育通知";
-    private static final int NOTIFICATION_ID = 1;
 
     @Override
-    public void onCreate() {
-        super.onCreate();
-        createNotificationChannel();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            Notification notification = buildNotification("星進教育", "通知服務運行中").build();
-            startForeground(NOTIFICATION_ID, notification);
+    public void onMessageReceived(RemoteMessage remoteMessage) {
+        super.onMessageReceived(remoteMessage);
+
+        String title = "";
+        String body = "";
+
+        if (remoteMessage.getNotification() != null) {
+            title = remoteMessage.getNotification().getTitle() != null ? remoteMessage.getNotification().getTitle() : "";
+            body = remoteMessage.getNotification().getBody() != null ? remoteMessage.getNotification().getBody() : "";
+        }
+
+        if (title.isEmpty()) title = remoteMessage.getData().getOrDefault("title", "");
+        if (body.isEmpty()) body = remoteMessage.getData().getOrDefault("body", "");
+
+        if (!title.isEmpty() || !body.isEmpty()) {
+            showNotification(title, body);
         }
     }
 
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        return START_STICKY;
-    }
+    private void showNotification(String title, String body) {
+        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
-    @Nullable
-    @Override
-    public IBinder onBind(Intent intent) {
-        return null;
-    }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH
+            );
+            channel.setDescription("星進教育 App 通知");
+            manager.createNotificationChannel(channel);
+        }
 
-    private NotificationCompat.Builder buildNotification(String title, String body) {
-        Intent notificationIntent = new Intent(this, MainActivity.class);
-        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(
-            this, 0, notificationIntent,
+            this, 0, intent,
             PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE
         );
 
-        return new NotificationCompat.Builder(this, CHANNEL_ID)
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle(title)
             .setContentText(body)
+            .setStyle(new NotificationCompat.BigTextStyle().bigText(body))
             .setAutoCancel(true)
-            .setPriority(NotificationCompat.PRIORITY_MIN)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent);
-    }
 
-    private void createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(
-                CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_LOW
-            );
-            channel.setDescription("星進教育 App 通知服務");
-            NotificationManager manager = getSystemService(NotificationManager.class);
-            if (manager != null) manager.createNotificationChannel(channel);
-        }
+        manager.notify((int) System.currentTimeMillis(), builder.build());
     }
 }
