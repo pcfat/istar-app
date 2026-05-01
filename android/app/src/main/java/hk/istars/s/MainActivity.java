@@ -26,7 +26,6 @@ public class MainActivity extends BridgeActivity {
     private long lastPullTime = 0;
     private boolean isPulling = false;
     private float pullProgress = 0;
-    private Handler handler = new Handler();
 
     @Override
     @SuppressLint("SetJavaScriptEnabled")
@@ -103,17 +102,14 @@ public class MainActivity extends BridgeActivity {
             float deltaY = ev.getY() - touchStartY;
             if (deltaY > 0) {
                 pullProgress = Math.min(deltaY / 150, 1.0f);
-                if (pullProgress > 0.05f) {
-                    if (webView != null) {
-                        webView.evaluateJavascript("if(window.__setPullProgress)window.__setPullProgress(" + pullProgress + ");", null);
-                    }
+                if (pullProgress > 0.05f && webView != null) {
+                    webView.evaluateJavascript("if(window.__setPullProgress)window.__setPullProgress(" + pullProgress + ");", null);
                 }
                 if (deltaY > 150) {
                     long now = System.currentTimeMillis();
                     if (now - lastPullTime > 2000) {
                         isPulling = true;
                         lastPullTime = now;
-                        pullProgress = 1.0f;
                         if (webView != null) {
                             webView.evaluateJavascript("if(window.__setRefreshing)window.__setRefreshing(true);", null);
                             webView.reload();
@@ -122,56 +118,40 @@ public class MainActivity extends BridgeActivity {
                 }
             }
         } else if (ev.getAction() == MotionEvent.ACTION_UP) {
-            if (!isPulling && pullProgress < 0.5f) {
-                if (webView != null) {
-                    webView.evaluateJavascript("if(window.__setPullProgress)window.__setPullProgress(0);", null);
-                }
+            if (!isPulling && webView != null) {
+                webView.evaluateJavascript("if(window.__setPullProgress)window.__setPullProgress(0);", null);
             }
         }
         return super.dispatchTouchEvent(ev);
     }
 
     private void injectPullRefreshUI(WebView view) {
-        String js = "javascript:(function(){" +
-            "var container=null,spinnerEl=null,progressEl=null,refreshing=false;" +
-            "function createUI(){" +
-            "  container=document.createElement('div');" +
-            "  container.id='__pull_container__';" +
-            "  container.innerHTML='<div style=\"position:fixed;top:0;left:0;right:0;height:60px;display:flex;align-items:center;justify-content:center;z-index:9999999;pointer-events:none;opacity:0;transition:opacity 0.2s;\">' +
-            "    <div id=\"__pull_circle__\" style=\"width:28px;height:28px;border-radius:50%;border:3px solid rgba(33,150,243,0.3);border-top-color:#2196F3;transform:scale(0);\"></div>" +
-            "  </div>'; " +
-            "  document.body.appendChild(container);" +
-            "  spinnerEl=document.getElementById('__pull_circle__');" +
-            "}" +
-            "createUI();" +
+        String script =
+            "javascript:(function(){" +
+            "var c=null,s=null,r=false;" +
+            "c=document.createElement('div');" +
+            "c.innerHTML='<div style=\"position:fixed;top:0;left:0;right:0;height:50px;display:flex;align-items:center;justify-content:center;z-index:9999999;pointer-events:none;opacity:0\"><div id=\"__pc\" style=\"width:24px;height:24px;border-radius:50%;border:3px solid rgba(33,150,243,0.3);border-top-color:#2196F3;transform:scale(0)\"></div></div>';" +
+            "document.body.appendChild(c);" +
+            "s=document.getElementById('__pc');" +
             "window.__setPullProgress=function(p){" +
-            "  if(refreshing)return;" +
-            "  if(p<0.05){container.style.opacity='0';spinnerEl.style.transform='scale(0)';return;}" +
-            "  container.style.opacity='1';" +
-            "  spinnerEl.style.transform='scale('+p+')';" +
-            "  if(p>=1){spinnerEl.style.transform='scale(1)';" +
-            "    spinnerEl.style.background='rgba(33,150,243,0.2)';" +
-            "    spinnerEl.innerHTML='<div style=\"width:100%;height:100%;border-radius:50%;border:3px solid transparent;border-top-color:#2196F3;animation:__spin 0.8s linear infinite;box-sizing:border-box;\"></div>';" +
+            "  if(r)return;" +
+            "  if(p<0.05){c.style.opacity='0';s.style.transform='scale(0)';return;}" +
+            "  c.style.opacity='1';s.style.transform='scale('+p+')';" +
+            "};" +
+            "window.__setRefreshing=function(v){" +
+            "  r=v;" +
+            "  if(v){" +
+            "    c.style.opacity='1';s.style.transform='scale(1.2)';s.style.borderTopColor='transparent';s.style.borderRightColor='#2196F3';s.style.animation='__spin 0.6s linear infinite';" +
+            "  }else{" +
+            "    c.style.opacity='0';s.style.transform='scale(0)';" +
+            "    setTimeout(function(){s.style.animation='';s.style.borderTopColor='#2196F3';s.style.borderRightColor='transparent';},300);" +
             "  }" +
             "};" +
-            "window.__setRefreshing=function(r){" +
-            "  refreshing=r;" +
-            "  if(r){" +
-            "    container.style.opacity='1';" +
-            "    spinnerEl.style.transform='scale(1.2)';" +
-            "    spinnerEl.style.background='rgba(33,150,243,0.3)';" +
-            "    spinnerEl.innerHTML='<div style=\"width:100%;height:100%;border-radius:50%;border:3px solid transparent;border-top-color:#2196F3;border-right-color:#2196F3;animation:__spin 0.6s linear infinite;box-sizing:border-box;\"></div>';" +
-            "  } else {" +
-            "    container.style.opacity='0';" +
-            "    spinnerEl.style.transform='scale(0)';" +
-            "    setTimeout(function(){spinnerEl.innerHTML='';spinnerEl.style.background='';},300);" +
-            "  }" +
-            "};" +
-            "var style=document.createElement('style');" +
-            "style.textContent='@keyframes __spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}';" +
-            "document.head.appendChild(style);" +
+            "var st=document.createElement('style');" +
+            "st.textContent='@keyframes __spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}';" +
+            "document.head.appendChild(st);" +
             "})();";
-        view.evaluateJavascript(js, null);
+        view.evaluateJavascript(script, null);
     }
 
     private void injectFcmToken(WebView view) {
