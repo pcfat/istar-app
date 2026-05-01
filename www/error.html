@@ -3,302 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>無網絡連接 - i-STAR管理系統</title>
+    <title>無網絡連接</title>
     <style>
-        :root {
-            --primary-color: #2563eb;
-            --primary-dark: #1d4ed8;
-            --secondary-color: #64748b;
-            --success-color: #10b981;
-            --background-color: #f8fafc;
-            --card-background: #ffffff;
-            --error-color: #ef4444;
-            --text-color: #1e293b;
-            --gradient-start: #2563eb;
-            --gradient-end: #1d4ed8;
-            --accent-color: #f59e0b;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            background: linear-gradient(120deg, #2196F3 0%, #6EC6FF 70%, #ffffff 100%);
+            font-family: 'Noto Sans TC', -apple-system, sans-serif;
+            background: linear-gradient(135deg, #1E88E5 0%, #64B5F6 100%);
             min-height: 100vh;
-            height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            padding: 0;
-            margin: 0;
-            -webkit-tap-highlight-color: transparent;
-            color: var(--text-color);
-            position: relative;
-            overflow-x: hidden;
+            padding: 20px;
         }
-
         .container {
-            width: 100%;
-            max-width: 1200px;
-            padding: 0;
-            margin: 0;
-            position: relative;
-            z-index: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-        }
-
-        .main-content {
-            width: 100%;
-            max-width: 450px;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 24px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            margin: 0 auto;
-            min-height: 0;
-        }
-
-        .error-section {
-            padding: 3rem 2rem;
-            background: white;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
             text-align: center;
+            max-width: 320px;
         }
-
-        .error-container {
-            width: 100%;
-            max-width: 400px;
-            margin: 0 auto;
-        }
-
-        .logo-container {
-            text-align: center;
-            margin-bottom: 1rem;
-        }
-
-        .logo-container img {
-            max-width: 200px;
-            height: auto;
-        }
-
-        .error-title {
-            color: var(--text-color);
-            font-weight: 700;
-            font-size: 1.75rem;
-            margin-bottom: 1rem;
-        }
-
-        .error-message {
-            color: var(--secondary-color);
-            font-size: 1rem;
-            line-height: 1.6;
-            margin-bottom: 2rem;
-        }
-
-        .btn-reload {
-            width: 100%;
-            padding: 0.875rem 1.5rem;
-            background: linear-gradient(90deg, #2196F3 0%, #6EC6FF 100%);
-            border: none;
-            border-radius: 12px;
-            color: white;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-        }
-
-        .btn-reload::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: 0.5s;
-        }
-
-        .btn-reload:hover::before {
-            left: 100%;
-        }
-
-        .btn-reload:hover {
-            background: linear-gradient(90deg, #1976D2 0%, #42A5F5 100%);
-            box-shadow: 0 10px 25px rgba(33,150,243,0.18);
-            transform: translateY(-2px);
-        }
-
-        .btn-reload:active {
-            transform: translateY(0);
-        }
-
-        .btn-reload svg {
-            width: 1.1rem;
-            height: 1.1rem;
-            fill: currentColor;
-        }
-
-        .footer-text {
-            text-align: center;
-            margin-top: 2rem;
-            color: var(--secondary-color);
-            font-size: 0.8rem;
-        }
-
-        @media (max-width: 768px) {
-            .main-content {
-                margin: 1rem;
-                border-radius: 16px;
-            }
-
-            .error-section {
-                padding: 2rem 1.5rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            body {
-                padding: 0.5rem;
-            }
-
-            .error-section {
-                padding: 1.5rem 1rem;
-            }
-
-            .error-title {
-                font-size: 1.5rem;
-            }
-
-            .btn-reload {
-                padding: 0.75rem 1rem;
-            }
-        }
-        /* 背景動畫圓形 */
-        .bg-anim {
-            position: fixed;
+        .icon {
+            width: 120px;
+            height: 120px;
+            background: rgba(255,255,255,0.2);
             border-radius: 50%;
-            opacity: 0.18;
-            z-index: 0;
-            pointer-events: none;
-            filter: blur(2px);
-            animation-timing-function: ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 28px;
+            font-size: 60px;
+        }
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 12px;
+        }
+        p {
+            font-size: 15px;
+            color: rgba(255,255,255,0.85);
+            line-height: 1.6;
+            margin-bottom: 36px;
+        }
+        .btn {
+            display: inline-block;
+            background: white;
+            color: #1E88E5;
+            padding: 16px 40px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        .btn:active {
+            transform: scale(0.97);
         }
     </style>
 </head>
 <body>
-    <!-- 背景動畫圓形將由 JavaScript 動態生成 -->
-    <div id="bg-animations"></div>
-    
     <div class="container">
-        <div class="main-content">
-            <div class="error-section">
-                <div class="error-container">
-                    <div class="logo-container">
-                        <img src="../img/logo.png" alt="星進教育 Logo">
-                    </div>
-
-                    <h2 class="error-title">無網絡連接</h2>
-                    <p class="error-message">
-                        無法連接到網絡，請檢查您的網絡連接後重試。
-                    </p>
-
-                    <button type="button" class="btn-reload" onclick="window.location.href='index.php'">
-                        <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M463.5 224H472c13.3 0 24-10.7 24-24V72c0-9.7-5.8-18.5-14.8-22.2s-19.3-1.7-26.2 5.2L413.4 96.6c-87.6-86.5-228.7-86.2-316.4 1c-87.5 87.5-87.5 229.3 0 316.8s229.3 87.5 316.8 0c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0c-62.5 62.5-163.8 62.5-226.3 0s-62.5-163.8 0-226.3c62.2-62.2 162.7-62.5 225.3-1L327 183c-6.9 6.9-8.9 17.2-5.2 26.2s12.5 14.8 22.2 14.8H463.5z"/>
-                        </svg>
-                        <span>重新載入</span>
-                    </button>
-
-                    <div class="footer-text">
-                        <p>© 2025 星進教育 i-STAR Education</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <div class="icon">📡</div>
+        <h1>無法連線</h1>
+        <p>請檢查您的網絡連線，然後重試。</p>
+        <button class="btn" onclick="location.reload()">重新嘗試</button>
     </div>
-
-    <script>
-        // 生成背景動畫圓形
-        function generateBackgroundAnimations() {
-            const container = document.getElementById('bg-animations');
-            const styleSheet = document.createElement('style');
-            document.head.appendChild(styleSheet);
-            
-            for (let i = 1; i <= 50; i++) {
-                const size = Math.floor(Math.random() * (180 - 40 + 1)) + 40;
-                const opacity = (Math.floor(Math.random() * (18 - 7 + 1)) + 7) / 100;
-                const leftOrRight = Math.random() < 0.5 ? 'left' : 'right';
-                const topOrBottom = Math.random() < 0.5 ? 'top' : 'bottom';
-                const lrVal = Math.floor(Math.random() * 101);
-                const tbVal = Math.floor(Math.random() * 101);
-                const color1 = Math.random() < 0.5 ? '#2196F3' : '#6EC6FF';
-                const color2 = color1 === '#2196F3' ? '#6EC6FF' : '#2196F3';
-                const duration = Math.floor(Math.random() * (15 - 6 + 1)) + 6;
-                const anim = `float${i}`;
-                
-                // 產生隨機keyframes，0%和100%一致
-                const tx0 = Math.floor(Math.random() * 61) - 30;
-                const ty0 = Math.floor(Math.random() * 61) - 30;
-                const sc0 = (Math.floor(Math.random() * (115 - 102 + 1)) + 102) / 100;
-                const tx25 = Math.floor(Math.random() * 61) - 30;
-                const ty25 = Math.floor(Math.random() * 61) - 30;
-                const sc25 = (Math.floor(Math.random() * (115 - 102 + 1)) + 102) / 100;
-                const tx50 = Math.floor(Math.random() * 61) - 30;
-                const ty50 = Math.floor(Math.random() * 61) - 30;
-                const sc50 = (Math.floor(Math.random() * (115 - 102 + 1)) + 102) / 100;
-                const tx75 = Math.floor(Math.random() * 61) - 30;
-                const ty75 = Math.floor(Math.random() * 61) - 30;
-                const sc75 = (Math.floor(Math.random() * (115 - 102 + 1)) + 102) / 100;
-                
-                // 創建圓形元素
-                const circle = document.createElement('div');
-                circle.className = `bg-anim bg-anim${i}`;
-                container.appendChild(circle);
-                
-                // 添加樣式
-                const css = `
-                    .bg-anim${i} {
-                        width: ${size}px;
-                        height: ${size}px;
-                        background: radial-gradient(circle, ${color1} 60%, ${color2} 100%);
-                        opacity: ${opacity};
-                        position: fixed;
-                        ${leftOrRight}: ${lrVal}vw;
-                        ${topOrBottom}: ${tbVal}vh;
-                        animation: ${anim} ${duration}s infinite linear;
-                    }
-                    @keyframes ${anim} {
-                        0%   { transform: translate(${tx0}px,${ty0}px) scale(${sc0}); }
-                        25%  { transform: translate(${tx25}px,${ty25}px) scale(${sc25}); }
-                        50%  { transform: translate(${tx50}px,${ty50}px) scale(${sc50}); }
-                        75%  { transform: translate(${tx75}px,${ty75}px) scale(${sc75}); }
-                        100% { transform: translate(${tx0}px,${ty0}px) scale(${sc0}); }
-                    }
-                `;
-                styleSheet.textContent += css;
-            }
-        }
-        
-        // 頁面載入時生成背景動畫
-        generateBackgroundAnimations();
-    </script>
 </body>
 </html>
