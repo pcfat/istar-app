@@ -67,10 +67,19 @@ public class MainActivity extends BridgeActivity {
                 }
 
                 @Override
+                public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                    return false;
+                }
+
+                @Override
+                public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
+                    super.onPageStarted(view, url, favicon);
+                    loadPullRefreshScript(view);
+                }
+
+                @Override
                 public void onPageFinished(WebView view, String url) {
                     super.onPageFinished(view, url);
-                    Log.d(TAG, "onPageFinished: " + url);
-                    loadPullRefreshScript(view);
                     injectFcmToken(view);
                 }
             });
@@ -141,12 +150,12 @@ public class MainActivity extends BridgeActivity {
     }
 
     private void loadPullRefreshScript(WebView view) {
-        Log.d(TAG, "Loading pull-refresh.js");
+        Toast.makeText(this, "加載刷新組件...", Toast.LENGTH_SHORT).show();
         String js = "(function(){" +
             "var s=document.createElement('script');" +
             "s.src='file:///android_asset/public/assets/pull-refresh.js';" +
-            "s.onload=function(){console.log('pull-refresh.js loaded');};" +
-            "s.onerror=function(){console.log('pull-refresh.js FAILED');};" +
+            "s.onload=function(){console.log('loaded');window.__setPullProgress&&window.__setPullProgress(0);};" +
+            "s.onerror=function(){console.error('failed');};" +
             "document.head.appendChild(s);" +
             "})();";
         view.evaluateJavascript(js, null);
