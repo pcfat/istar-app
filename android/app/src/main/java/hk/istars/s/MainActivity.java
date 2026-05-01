@@ -6,7 +6,10 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.core.content.ContextCompat;
@@ -50,6 +53,19 @@ public class MainActivity extends BridgeActivity {
                 WebView webView = getBridge().getWebView();
                 if (webView != null) webView.reload();
                 swipeRefreshLayout.postDelayed(() -> swipeRefreshLayout.setRefreshing(false), 1500);
+            });
+        }
+
+        // Set WebViewClient to show error.html on network failure
+        WebView webView = getBridge().getWebView();
+        if (webView != null) {
+            webView.setWebViewClient(new WebViewClient() {
+                @Override
+                public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                    if (request.isForMainFrame()) {
+                        view.loadUrl("file:///android_asset/public/error.html");
+                    }
+                }
             });
         }
 
