@@ -6,13 +6,6 @@
     <meta name="theme-color" content="#2196F3">
     <title>無網絡連接 - i-STAR管理系統</title>
     <style>
-        :root {
-            --primary-color: #2563eb;
-            --primary-dark: #1d4ed8;
-            --secondary-color: #64748b;
-            --text-color: #1e293b;
-        }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         html, body {
@@ -22,68 +15,52 @@
 
         body {
             background: linear-gradient(120deg, #2196F3 0%, #6EC6FF 70%, #ffffff 100%);
-            min-height: 100vh;
-            height: 100vh;
+            height: 100%;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
-            margin: 0;
-            -webkit-tap-highlight-color: transparent;
-            color: var(--text-color);
-        }
-
-        .container {
-            width: 100%;
-            max-width: 450px;
-            padding: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: auto;
-            flex: 1;
-            align-items: stretch;
         }
 
         .main-content {
             width: 100%;
-            background: rgba(255, 255, 255, 0.95);
+            max-width: 400px;
+            background: rgba(255, 255, 255, 0.97);
             backdrop-filter: blur(20px);
-            border-radius: 24px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
             overflow: hidden;
+            margin: 24px;
         }
 
         .error-section {
-            padding: 3rem 2rem;
+            padding: 2.5rem 2rem;
             background: white;
             text-align: center;
         }
 
         .logo-container {
             text-align: center;
-            margin-bottom: 1rem;
+            margin-bottom: 0.75rem;
         }
 
         .logo-container img {
-            max-width: 180px;
+            max-width: 150px;
             height: auto;
         }
 
         .error-title {
-            color: var(--text-color);
+            color: #1e293b;
             font-weight: 700;
-            font-size: 1.75rem;
-            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            margin-bottom: 0.75rem;
         }
 
         .error-message {
-            color: var(--secondary-color);
-            font-size: 1rem;
+            color: #64748b;
+            font-size: 0.95rem;
             line-height: 1.6;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
         }
 
         .btn-reload {
@@ -100,119 +77,100 @@
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
-            margin-top: 2rem;
+            margin-top: 1.5rem;
         }
 
-        .btn-reload:active {
-            opacity: 0.9;
-        }
+        .btn-reload:active { opacity: 0.85; }
 
         .footer-text {
             text-align: center;
-            margin-top: 2rem;
-            color: var(--secondary-color);
-            font-size: 0.8rem;
+            margin-top: 1.5rem;
+            color: #94a3b8;
+            font-size: 0.75rem;
         }
 
         .bg-anim {
             position: fixed;
             border-radius: 50%;
-            opacity: 0.15;
+            opacity: 0.12;
             z-index: 0;
             pointer-events: none;
             filter: blur(2px);
         }
 
-        @media (max-width: 480px) {
+        @media (max-width: 400px) {
+            .main-content { margin: 16px; border-radius: 16px; }
             .error-section { padding: 2rem 1.5rem; }
-            .error-title { font-size: 1.5rem; }
-            .logo-container img { max-width: 150px; }
         }
     </style>
 </head>
 <body>
     <div id="bg-animations"></div>
 
-    <div class="container">
-        <div class="main-content">
-            <div class="error-section">
-                <div class="logo-container">
-                    <img src="assets/logo.png" alt="星進教育 Logo">
-                </div>
+    <div class="main-content">
+        <div class="error-section">
+            <div class="logo-container">
+                <img src="assets/logo.png" alt="星進教育 Logo">
+            </div>
 
-                <h2 class="error-title">無網絡連接</h2>
-                <p class="error-message">無法連接到網絡，<br>請檢查您的網絡連接後重試。</p>
+            <h2 class="error-title">無網絡連接</h2>
+            <p class="error-message">無法連接到網絡，請檢查您的<br>網絡連接後重試。</p>
 
-                <button type="button" class="btn-reload" onclick="window.location.href='https://s.istars.hk/app/index.php'">
-                    <svg viewBox="0 0 512 512" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
-                        <path fill="white" d="M463.5 224H472c13.3 0 24-10.7 24-24V72c0-9.7-5.8-18.5-14.8-22.2s-19.3-1.7-26.2 5.2L413.4 96.6c-87.6-86.5-228.7-86.2-316.4 1c-87.5 87.5-87.5 229.3 0 316.8s229.3 87.5 316.8 0c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0c-62.5 62.5-163.8 62.5-226.3 0s-62.5-163.8 0-226.3c62.2-62.2 162.7-62.5 225.3-1L327 183c-6.9 6.9-8.9 17.2-5.2 26.2s12.5 14.8 22.2 14.8H463.5z"/>
-                    </svg>
-                    重新載入
-                </button>
+            <button type="button" class="btn-reload" onclick="window.location.href='https://s.istars.hk/app/index.php'">
+                <svg viewBox="0 0 512 512" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+                    <path fill="white" d="M463.5 224H472c13.3 0 24-10.7 24-24V72c0-9.7-5.8-18.5-14.8-22.2s-19.3-1.7-26.2 5.2L413.4 96.6c-87.6-86.5-228.7-86.2-316.4 1c-87.5 87.5-87.5 229.3 0 316.8s229.3 87.5 316.8 0c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0c-62.5 62.5-163.8 62.5-226.3 0s-62.5-163.8 0-226.3c62.2-62.2 162.7-62.5 225.3-1L327 183c-6.9 6.9-8.9 17.2-5.2 26.2s12.5 14.8 22.2 14.8H463.5z"/>
+                </svg>
+                重新載入
+            </button>
 
-                <div class="footer-text">
-                    <p>© 2025 星進教育 i-STAR Education</p>
-                </div>
+            <div class="footer-text">
+                <p>© 2025 星進教育 i-STAR Education</p>
             </div>
         </div>
     </div>
 
     <script>
-        function generateBackgroundAnimations() {
+        (function() {
             var container = document.getElementById('bg-animations');
-            var styleSheet = document.createElement('style');
-            document.head.appendChild(styleSheet);
+            var style = document.createElement('style');
+            document.head.appendChild(style);
 
-            for (var i = 1; i <= 20; i++) {
-                var size = Math.floor(Math.random() * (150 - 40 + 1)) + 40;
-                var opacity = (Math.floor(Math.random() * (15 - 7 + 1)) + 7) / 100;
-                var leftOrRight = Math.random() < 0.5 ? 'left' : 'right';
-                var topOrBottom = Math.random() < 0.5 ? 'top' : 'bottom';
-                var lrVal = Math.floor(Math.random() * 101);
-                var tbVal = Math.floor(Math.random() * 101);
-                var color1 = Math.random() < 0.5 ? '#2196F3' : '#6EC6FF';
-                var color2 = color1 === '#2196F3' ? '#6EC6FF' : '#2196F3';
-                var duration = Math.floor(Math.random() * (15 - 6 + 1)) + 6;
+            for (var i = 1; i <= 15; i++) {
+                var size = Math.floor(Math.random() * (120 - 30) + 30);
+                var opacity = (Math.floor(Math.random() * 12 + 5)) / 100;
+                var lr = Math.random() < 0.5 ? 'left' : 'right';
+                var tb = Math.random() < 0.5 ? 'top' : 'bottom';
+                var lrVal = Math.floor(Math.random() * 90);
+                var tbVal = Math.floor(Math.random() * 90);
+                var color = Math.random() < 0.5 ? '#2196F3' : '#6EC6FF';
+                var duration = Math.floor(Math.random() * 10 + 6);
                 var anim = 'float' + i;
 
-                var tx0 = Math.floor(Math.random() * 61) - 30;
-                var ty0 = Math.floor(Math.random() * 61) - 30;
-                var sc0 = (Math.floor(Math.random() * (115 - 102 + 1)) + 102) / 100;
-                var tx25 = Math.floor(Math.random() * 61) - 30;
-                var ty25 = Math.floor(Math.random() * 61) - 30;
-                var sc25 = (Math.floor(Math.random() * (115 - 102 + 1)) + 102) / 100;
-                var tx50 = Math.floor(Math.random() * 61) - 30;
-                var ty50 = Math.floor(Math.random() * 61) - 30;
-                var sc50 = (Math.floor(Math.random() * (115 - 102 + 1)) + 102) / 100;
-                var tx75 = Math.floor(Math.random() * 61) - 30;
-                var ty75 = Math.floor(Math.random() * 61) - 30;
-                var sc75 = (Math.floor(Math.random() * (115 - 102 + 1)) + 102) / 100;
+                var tx0 = Math.floor(Math.random() * 50 - 25);
+                var ty0 = Math.floor(Math.random() * 50 - 25);
+                var sc0 = (Math.floor(Math.random() * 15 + 100)) / 100;
+                var tx1 = Math.floor(Math.random() * 50 - 25);
+                var ty1 = Math.floor(Math.random() * 50 - 25);
+                var sc1 = (Math.floor(Math.random() * 15 + 100)) / 100;
 
-                var circle = document.createElement('div');
-                circle.className = 'bg-anim bg-anim' + i;
-                container.appendChild(circle);
+                var div = document.createElement('div');
+                div.className = 'bg-anim bg-anim' + i;
+                container.appendChild(div);
 
-                styleSheet.textContent +=
-                    '.bg-anim' + i + ' {' +
-                    ' width:' + size + 'px;height:' + size + 'px;' +
-                    ' background:radial-gradient(circle,' + color1 + ' 60%,' + color2 + ' 100%);' +
-                    ' opacity:' + opacity + ';' +
-                    ' position:fixed;' +
-                    ' ' + leftOrRight + ':' + lrVal + 'vw;' +
-                    ' ' + topOrBottom + ':' + tbVal + 'vh;' +
-                    ' animation:' + anim + ' ' + duration + 's infinite linear;' +
+                style.textContent +=
+                    '.bg-anim' + i + '{' +
+                    'width:' + size + 'px;height:' + size + 'px;' +
+                    'background:radial-gradient(circle,' + color + ' 60%,transparent 100%);' +
+                    'opacity:' + opacity + ';' +
+                    'position:fixed;' + lr + ':' + lrVal + '%;' + tb + ':' + tbVal + '%;' +
+                    'animation:' + anim + ' ' + duration + 's infinite ease-in-out;' +
                     '}' +
-                    '@keyframes ' + anim + ' {' +
-                    ' 0%  {transform:translate(' + tx0 + 'px,' + ty0 + 'px) scale(' + sc0 + ')}' +
-                    ' 25% {transform:translate(' + tx25 + 'px,' + ty25 + 'px) scale(' + sc25 + ')}' +
-                    ' 50% {transform:translate(' + tx50 + 'px,' + ty50 + 'px) scale(' + sc50 + ')}' +
-                    ' 75% {transform:translate(' + tx75 + 'px,' + ty75 + 'px) scale(' + sc75 + ')}' +
-                    ' 100%{transform:translate(' + tx0 + 'px,' + ty0 + 'px) scale(' + sc0 + ')}' +
+                    '@keyframes ' + anim + '{' +
+                    '0%,100%{transform:translate(' + tx0 + 'px,' + ty0 + 'px) scale(' + sc0 + ')}' +
+                    '50%{transform:translate(' + tx1 + 'px,' + ty1 + 'px) scale(' + sc1 + ')}' +
                     '}';
             }
-        }
-
-        generateBackgroundAnimations();
+        })();
     </script>
 </body>
 </html>
