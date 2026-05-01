@@ -20,23 +20,19 @@ import com.google.firebase.messaging.FirebaseMessaging;
 public class MainActivity extends BridgeActivity {
 
     private SwipeRefreshLayout swipeRefreshLayout;
-    private WebView webView;
     private ActivityResultLauncher<String> notificationPermissionLauncher;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Register notification permission launcher
         notificationPermissionLauncher = registerForActivityResult(
             new ActivityResultContracts.RequestPermission(),
             granted -> {}
         );
 
-        // Create notification channel for Android 8+
         createNotificationChannel();
 
-        // Request notification permission for Android 13+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS)
                     != PackageManager.PERMISSION_GRANTED) {
@@ -45,29 +41,26 @@ public class MainActivity extends BridgeActivity {
         }
 
         swipeRefreshLayout = findViewById(R.id.swipe_refresh);
-        webView = findViewById(R.id.main_webview);
 
-        if (webView != null) {
-            webView.setWebViewClient(new WebViewClient() {
-                @Override
-                public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-                    if (request.isForMainFrame()) {
-                        view.loadUrl("file:///android_asset/public/error.html");
-                    }
+        final WebView webView = getBridge().getWebView();
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                if (request.isForMainFrame()) {
+                    view.loadUrl("file:///android_asset/public/error.html");
                 }
-            });
-        }
+            }
+        });
 
         if (swipeRefreshLayout != null) {
             swipeRefreshLayout.setColorSchemeResources(
                 android.R.color.holo_blue_bright,
                 android.R.color.holo_blue_light
             );
+            final SwipeRefreshLayout srl = swipeRefreshLayout;
             swipeRefreshLayout.setOnRefreshListener(() -> {
-                if (webView != null) {
-                    webView.reload();
-                }
-                swipeRefreshLayout.postDelayed(() -> swipeRefreshLayout.setRefreshing(false), 1500);
+                webView.reload();
+                srl.postDelayed(() -> srl.setRefreshing(false), 1500);
             });
         }
 
@@ -81,9 +74,10 @@ public class MainActivity extends BridgeActivity {
                     @Override
                     public void run() {
                         attempts++;
-                        if (webView != null) {
+                        WebView wv = getBridge().getWebView();
+                        if (wv != null) {
                             String js = "if(typeof window.__registerFCMToken==='function'){window.__registerFCMToken('" + token + "');}";
-                            webView.evaluateJavascript(js, result -> {
+                            wv.evaluateJavascript(js, result -> {
                                 if ((result == null || result.equals("null") || result.equals("undefined")) && attempts < 15) {
                                     handler.postDelayed(this, 2000);
                                 }
