@@ -51,8 +51,9 @@ public class MainActivity extends BridgeActivity {
             webView.getSettings().setJavaScriptEnabled(true);
             webView.getSettings().setDomStorageEnabled(true);
 
-            // Inject pull refresh UI immediately
-            injectPullRefreshUI(webView);
+            // Load pull refresh JS immediately
+            String js = "var sc=document.createElement('script');sc.src='assets/pull-refresh.js';document.head.appendChild(sc);";
+            webView.evaluateJavascript(js, null);
 
             webView.setWebViewClient(new WebViewClient() {
                 @Override
@@ -65,7 +66,6 @@ public class MainActivity extends BridgeActivity {
                 @Override
                 public void onPageFinished(WebView view, String url) {
                     super.onPageFinished(view, url);
-                    injectPullRefreshUI(view);
                     injectFcmToken(view);
                 }
             });
@@ -129,32 +129,7 @@ public class MainActivity extends BridgeActivity {
     }
 
     private void injectPullRefreshUI(WebView view) {
-        String script =
-            "javascript:(function(){" +
-            "var c=null,s=null,r=false;" +
-            "c=document.createElement('div');" +
-            "c.innerHTML='<div style=\"position:fixed;top:0;left:0;right:0;height:50px;display:flex;align-items:center;justify-content:center;z-index:9999999;pointer-events:none;opacity:0\"><div id=\"__pc\" style=\"width:24px;height:24px;border-radius:50%;border:3px solid rgba(33,150,243,0.3);border-top-color:#2196F3;transform:scale(0)\"></div></div>';" +
-            "document.body.appendChild(c);" +
-            "s=document.getElementById('__pc');" +
-            "window.__setPullProgress=function(p){" +
-            "  if(r)return;" +
-            "  if(p<0.05){c.style.opacity='0';s.style.transform='scale(0)';return;}" +
-            "  c.style.opacity='1';s.style.transform='scale('+p+')';" +
-            "};" +
-            "window.__setRefreshing=function(v){" +
-            "  r=v;" +
-            "  if(v){" +
-            "    c.style.opacity='1';s.style.transform='scale(1.2)';s.style.borderTopColor='transparent';s.style.borderRightColor='#2196F3';s.style.animation='__spin 0.6s linear infinite';" +
-            "  }else{" +
-            "    c.style.opacity='0';s.style.transform='scale(0)';" +
-            "    setTimeout(function(){s.style.animation='';s.style.borderTopColor='#2196F3';s.style.borderRightColor='transparent';},300);" +
-            "  }" +
-            "};" +
-            "var st=document.createElement('style');" +
-            "st.textContent='@keyframes __spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}';" +
-            "document.head.appendChild(st);" +
-            "})();";
-        view.evaluateJavascript(script, null);
+        // Now loaded via assets/pull-refresh.js
     }
 
     private void injectFcmToken(WebView view) {
