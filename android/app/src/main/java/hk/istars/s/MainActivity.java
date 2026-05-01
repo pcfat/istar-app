@@ -65,6 +65,7 @@ public class MainActivity extends BridgeActivity {
                 @Override
                 public void onPageFinished(WebView view, String url) {
                     super.onPageFinished(view, url);
+                    injectPullRefreshUI(view);
                     injectFcmToken(view);
                 }
             });
