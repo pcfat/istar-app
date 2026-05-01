@@ -27,14 +27,13 @@ public class IstarMessagingService extends FirebaseMessagingService {
             body = remoteMessage.getNotification().getBody() != null ? remoteMessage.getNotification().getBody() : "";
         }
 
-        if (title.isEmpty() && remoteMessage.getData().containsKey("title")) {
-            title = remoteMessage.getData().get("title");
-        }
-        if (body.isEmpty() && remoteMessage.getData().containsKey("body")) {
-            body = remoteMessage.getData().get("body");
-        }
+        // Also check data payload
+        if (title.isEmpty()) title = remoteMessage.getData().getOrDefault("title", "");
+        if (body.isEmpty()) body = remoteMessage.getData().getOrDefault("body", "");
 
-        showNotification(title, body);
+        if (!title.isEmpty() || !body.isEmpty()) {
+            showNotification(title, body);
+        }
     }
 
     private void showNotification(String title, String body) {
