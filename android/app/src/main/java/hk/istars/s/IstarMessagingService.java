@@ -3,67 +3,67 @@ package hk.istars.s;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.os.IBinder;
+import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
-import com.google.firebase.messaging.FirebaseMessagingService;
-import com.google.firebase.messaging.RemoteMessage;
 
-public class IstarMessagingService extends FirebaseMessagingService {
+public class IstarMessagingService extends Service {
 
     private static final String CHANNEL_ID = "istar_notifications";
     private static final String CHANNEL_NAME = "星進教育通知";
+    private static final int NOTIFICATION_ID = 1;
 
     @Override
-    public void onMessageReceived(RemoteMessage remoteMessage) {
-        super.onMessageReceived(remoteMessage);
-
-        String title = "";
-        String body = "";
-
-        if (remoteMessage.getNotification() != null) {
-            title = remoteMessage.getNotification().getTitle() != null ? remoteMessage.getNotification().getTitle() : "";
-            body = remoteMessage.getNotification().getBody() != null ? remoteMessage.getNotification().getBody() : "";
-        }
-
-        // Also check data payload
-        if (title.isEmpty()) title = remoteMessage.getData().getOrDefault("title", "");
-        if (body.isEmpty()) body = remoteMessage.getData().getOrDefault("body", "");
-
-        if (!title.isEmpty() || !body.isEmpty()) {
-            showNotification(title, body);
+    public void onCreate() {
+        super.onCreate();
+        createNotificationChannel();
+        // Start as foreground to prevent system from killing us
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(NOTIFICATION_ID, buildNotification("星進教育", "通知服務運行中"));
         }
     }
 
-    private void showNotification(String title, String body) {
-        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        // Keep service alive
+        return START_STICKY;
+    }
 
-        // Create channel for Android 8+
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(
-                CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH
-            );
-            channel.setDescription("星進教育 App 通知");
-            manager.createNotificationChannel(channel);
-        }
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
 
-        Intent intent = new Intent(this, MainActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+    private NotificationCompat.Builder buildNotification(String title, String body) {
+        Intent notificationIntent = new Intent(this, MainActivity.class);
+        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         PendingIntent pendingIntent = PendingIntent.getActivity(
-            this, 0, intent,
+            this, 0, notificationIntent,
             PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE
         );
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
+        return new NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle(title)
             .setContentText(body)
-            .setStyle(new NotificationCompat.BigTextStyle().bigText(body))
             .setAutoCancel(true)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setPriority(NotificationCompat.PRIORITY_MIN)
             .setContentIntent(pendingIntent);
+    }
 
-        manager.notify((int) System.currentTimeMillis(), builder.build());
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_LOW
+            );
+            channel.setDescription("星進教育 App 通知服務");
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            if (manager != null) manager.createNotificationChannel(channel);
+        }
     }
 }
