@@ -23,8 +23,9 @@ public class MainActivity extends BridgeActivity {
     private ActivityResultLauncher<String> notificationPermissionLauncher;
     private WebView webView;
     private float touchStartY = 0;
-    private boolean isAtTop = true;
     private long lastPullTime = 0;
+    private boolean isPulling = false;
+    private Handler handler = new Handler();
 
     @Override
     @SuppressLint("SetJavaScriptEnabled")
@@ -53,26 +54,15 @@ public class MainActivity extends BridgeActivity {
             webView.setWebViewClient(new WebViewClient() {
                 @Override
                 public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-                    // Only handle real errors, not our internal reload URL
-                    if (request.isForMainFrame() && !request.getUrl().toString().startsWith("istar://")) {
+                    if (request.isForMainFrame()) {
                         view.loadUrl("file:///android_asset/public/error.html");
                     }
                 }
 
                 @Override
-                public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                    // Handle our pull-to-refresh URL scheme
-                    if ("istar://refresh".equals(url)) {
-                        view.reload();
-                        return true;
-                    }
-                    return false;
-                }
-
-                @Override
                 public void onPageFinished(WebView view, String url) {
                     super.onPageFinished(view, url);
-                    injectPullRefreshScript(view);
+                    injectPullRefreshUI(view);
                     injectFcmToken(view);
                 }
             });
@@ -82,7 +72,7 @@ public class MainActivity extends BridgeActivity {
             .addOnCompleteListener(task -> {
                 if (!task.isSuccessful() || task.getResult() == null) return;
                 final String token = task.getResult().replace("'", "\\'");
-                Handler handler = new Handler(getMainLooper());
+                Handler h = new Handler(getMainLooper());
                 Runnable inject = new Runnable() {
                     int attempts = 0;
                     @Override
@@ -92,13 +82,13 @@ public class MainActivity extends BridgeActivity {
                             String js = "if(typeof window.__registerFCMToken==='function'){window.__registerFCMToken('" + token + "');}";
                             webView.evaluateJavascript(js, result -> {
                                 if ((result == null || result.equals("null") || result.equals("undefined")) && attempts < 15) {
-                                    handler.postDelayed(this, 2000);
+                                    h.postDelayed(this, 2000);
                                 }
                             });
                         }
                     }
                 };
-                handler.postDelayed(inject, 5000);
+                h.postDelayed(inject, 5000);
             });
     }
 
@@ -106,31 +96,60 @@ public class MainActivity extends BridgeActivity {
     public boolean dispatchTouchEvent(MotionEvent ev) {
         if (ev.getAction() == MotionEvent.ACTION_DOWN) {
             touchStartY = ev.getY();
-        } else if (ev.getAction() == MotionEvent.ACTION_UP) {
+            isPulling = false;
+        } else if (ev.getAction() == MotionEvent.ACTION_MOVE) {
             float deltaY = ev.getY() - touchStartY;
-            long now = System.currentTimeMillis();
-            // Only trigger if: pulled down >150px, was at top, and 2s have passed
-            if (deltaY > 150 && isAtTop && (now - lastPullTime) > 2000) {
-                lastPullTime = now;
+            if (deltaY > 50 && !isPulling) {
+                // Show pull indicator
                 if (webView != null) {
-                    webView.reload();
+                    webView.evaluateJavascript("if(window.__showPullIndicator)window.__showPullIndicator();", null);
                 }
             }
+            if (deltaY > 150) {
+                long now = System.currentTimeMillis();
+                if (now - lastPullTime > 2000) {
+                    isPulling = true;
+                    lastPullTime = now;
+                    // Trigger reload
+                    if (webView != null) {
+                        webView.evaluateJavascript("if(window.__hidePullIndicator)window.__hidePullIndicator();", null);
+                        webView.reload();
+                    }
+                }
+            }
+        } else if (ev.getAction() == MotionEvent.ACTION_UP) {
+            // Hide indicator
+            handler.postDelayed(() -> {
+                if (webView != null) {
+                    webView.evaluateJavascript("if(window.__hidePullIndicator)window.__hidePullIndicator();", null);
+                }
+            }, 500);
         }
         return super.dispatchTouchEvent(ev);
     }
 
-    private void injectPullRefreshScript(WebView view) {
-        String script = "javascript:(function(){" +
-            "var s=0;document.addEventListener('touchstart',function(e){s=e.touches[0].pageY;},false);" +
-            "document.addEventListener('touchmove',function(e){" +
-            "  var d=e.touches[0].pageY-s;" +
-            "  if(d>120&&s<80&&window.scrollY<10){" +
-            "    window.location='istar://refresh';" +
-            "  }" +
-            "},false);" +
+    private void injectPullRefreshUI(WebView view) {
+        String css = "javascript:(function(){" +
+            "var indicator=null,spinner=null,isShowing=false;" +
+            "window.__showPullIndicator=function(){" +
+            "  if(isShowing)return;isShowing=true;" +
+            "  indicator=document.createElement('div');" +
+            "  indicator.id='__pull_indicator__';" +
+            "  indicator.innerHTML='<div style=\"position:fixed;top:0;left:0;right:0;z-index:9999999;background:linear-gradient(135deg,#2196F3,#6EC6FF);color:white;text-align:center;padding:12px;font-family:-apple-system,sans-serif;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 2px 8px rgba(0,0,0,0.15);\">" +
+            "    <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" style=\"animation:__spin 1s linear infinite\"><path fill=\"white\" d=\"M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z\"/></svg>" +
+            "    <span>釋放以重新整理...</span>" +
+            "  </div>';" +
+            "  var style=document.createElement('style');" +
+            "  style.textContent='@keyframes __spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}';" +
+            "  document.head.appendChild(style);" +
+            "  document.body.appendChild(indicator);" +
+            "};" +
+            "window.__hidePullIndicator=function(){" +
+            "  if(indicator){indicator.remove();indicator=null;}" +
+            "  isShowing=false;" +
+            "};" +
             "})();";
-        view.evaluateJavascript(script, null);
+        view.evaluateJavascript(css, null);
     }
 
     private void injectFcmToken(WebView view) {
