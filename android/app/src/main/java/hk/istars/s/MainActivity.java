@@ -66,6 +66,7 @@ public class MainActivity extends BridgeActivity {
         // Setup WebView with error handling
         WebView webView = findViewById(R.id.main_webview);
         if (webView == null) webView = getBridge().getWebView();
+        final WebView wv = webView;
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setDomStorageEnabled(true);
 
@@ -92,7 +93,7 @@ public class MainActivity extends BridgeActivity {
         });
 
         swipeRefreshLayout.setOnRefreshListener(() -> {
-            webView.reload();
+            wv.reload();
             swipeRefreshLayout.postDelayed(() -> swipeRefreshLayout.setRefreshing(false), 1500);
         });
 
@@ -107,11 +108,11 @@ public class MainActivity extends BridgeActivity {
                     @Override
                     public void run() {
                         attempts++;
-                        WebView wv = findViewById(R.id.main_webview);
-                        if (wv == null) wv = getBridge().getWebView();
-                        if (wv != null) {
+                        WebView w = findViewById(R.id.main_webview);
+                        if (w == null) w = getBridge().getWebView();
+                        if (w != null) {
                             String js = "if(typeof window.__registerFCMToken==='function'){window.__registerFCMToken('" + token + "');}";
-                            wv.evaluateJavascript(js, result -> {
+                            w.evaluateJavascript(js, result -> {
                                 if ((result == null || result.equals("null") || result.equals("undefined")) && attempts < 15) {
                                     handler.postDelayed(this, 2000);
                                 }
