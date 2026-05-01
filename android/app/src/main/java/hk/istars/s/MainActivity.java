@@ -125,6 +125,9 @@ public class MainActivity extends BridgeActivity {
                 pullProgress = Math.min(deltaY / 150, 1.0f);
                 if (pullProgress > 0.05f && webView != null) {
                     webView.evaluateJavascript("if(window.__setPullProgress){window.__setPullProgress(" + pullProgress + ");}else{console.log('NOT FOUND');}", null);
+                    if (pullProgress > 0.3f) {
+                        Toast.makeText(this, "下拉進度: " + (int)(pullProgress * 100) + "%", Toast.LENGTH_SHORT).show();
+                    }
                 }
                 if (deltaY > 150) {
                     long now = System.currentTimeMillis();
