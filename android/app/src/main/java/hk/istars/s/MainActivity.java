@@ -48,6 +48,7 @@ public class MainActivity extends BridgeActivity {
         if (webView == null) {
             webView = getBridge().getWebView();
         }
+        final WebView wv = webView;
 
         if (webView != null) {
             webView.getSettings().setJavaScriptEnabled(true);
@@ -75,9 +76,10 @@ public class MainActivity extends BridgeActivity {
             });
 
             if (swipeRefreshLayout != null) {
-                swipeRefreshLayout.setOnRefreshListener(() -> {
-                    webView.reload();
-                    swipeRefreshLayout.postDelayed(() -> swipeRefreshLayout.setRefreshing(false), 1500);
+                final SwipeRefreshLayout srl = swipeRefreshLayout;
+                srl.setOnRefreshListener(() -> {
+                    wv.reload();
+                    srl.postDelayed(() -> srl.setRefreshing(false), 1500);
                 });
             }
         }
