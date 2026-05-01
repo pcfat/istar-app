@@ -57,7 +57,6 @@ public class MainActivity extends BridgeActivity {
             CookieManager cookieManager = CookieManager.getInstance();
             cookieManager.setAcceptCookie(true);
             cookieManager.setAcceptFileSchemeCookies(true);
-            cookieManager.setCookieAcceptPolicy(android.webkit.CookieManager.COOKIE_POLICY_ACCEPT);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 cookieManager.flush();
             }
