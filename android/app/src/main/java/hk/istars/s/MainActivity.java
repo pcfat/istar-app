@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
@@ -19,7 +20,7 @@ import com.getcapacitor.BridgeActivity;
 import com.google.firebase.messaging.FirebaseMessaging;
 
 public class MainActivity extends BridgeActivity {
-
+    private static final String TAG = "MainActivity";
     private ActivityResultLauncher<String> notificationPermissionLauncher;
     private WebView webView;
     private float touchStartY = 0;
@@ -31,6 +32,7 @@ public class MainActivity extends BridgeActivity {
     @SuppressLint("SetJavaScriptEnabled")
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(TAG, "onCreate");
 
         notificationPermissionLauncher = registerForActivityResult(
             new ActivityResultContracts.RequestPermission(),
@@ -47,13 +49,17 @@ public class MainActivity extends BridgeActivity {
         }
 
         webView = getBridge().getWebView();
+        Log.d(TAG, "webView=" + webView);
+
         if (webView != null) {
             webView.getSettings().setJavaScriptEnabled(true);
             webView.getSettings().setDomStorageEnabled(true);
+            Log.d(TAG, "JavaScript enabled");
 
             webView.setWebViewClient(new WebViewClient() {
                 @Override
                 public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                    Log.d(TAG, "onReceivedError");
                     if (request.isForMainFrame()) {
                         view.loadUrl("file:///android_asset/public/error.html");
                     }
@@ -62,6 +68,7 @@ public class MainActivity extends BridgeActivity {
                 @Override
                 public void onPageFinished(WebView view, String url) {
                     super.onPageFinished(view, url);
+                    Log.d(TAG, "onPageFinished: " + url);
                     loadPullRefreshScript(view);
                     injectFcmToken(view);
                 }
@@ -94,42 +101,54 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-        if (ev.getAction() == MotionEvent.ACTION_DOWN) {
-            touchStartY = ev.getY();
+        int action = ev.getAction();
+        float y = ev.getY();
+
+        if (action == MotionEvent.ACTION_DOWN) {
+            touchStartY = y;
             isPulling = false;
             pullProgress = 0;
-        } else if (ev.getAction() == MotionEvent.ACTION_MOVE) {
-            float deltaY = ev.getY() - touchStartY;
+            Log.d(TAG, "TOUCH DOWN touchStartY=" + touchStartY);
+        } else if (action == MotionEvent.ACTION_MOVE) {
+            float deltaY = y - touchStartY;
+            Log.d(TAG, "TOUCH MOVE deltaY=" + deltaY);
+
             if (deltaY > 0) {
                 pullProgress = Math.min(deltaY / 150, 1.0f);
                 if (pullProgress > 0.05f && webView != null) {
-                    webView.evaluateJavascript("if(window.__setPullProgress)window.__setPullProgress(" + pullProgress + ");", null);
+                    String js = "if(window.__setPullProgress){window.__setPullProgress(" + pullProgress + ");}else{console.log('NOT FOUND: __setPullProgress');}";
+                    webView.evaluateJavascript(js, null);
                 }
                 if (deltaY > 150) {
                     long now = System.currentTimeMillis();
                     if (now - lastPullTime > 2000) {
                         isPulling = true;
                         lastPullTime = now;
+                        Log.d(TAG, "PULL TRIGGER RELOAD");
                         if (webView != null) {
-                            webView.evaluateJavascript("if(window.__setRefreshing)window.__setRefreshing(true);", null);
+                            webView.evaluateJavascript("if(window.__setRefreshing){window.__setRefreshing(true);}else{console.log('NOT FOUND: __setRefreshing');}", null);
                             webView.reload();
                         }
                     }
                 }
             }
-        } else if (ev.getAction() == MotionEvent.ACTION_UP) {
+        } else if (action == MotionEvent.ACTION_UP) {
+            Log.d(TAG, "TOUCH UP isPulling=" + isPulling);
             if (!isPulling && webView != null) {
-                webView.evaluateJavascript("if(window.__setPullProgress)window.__setPullProgress(0);", null);
+                webView.evaluateJavascript("if(window.__setPullProgress){window.__setPullProgress(0);}", null);
             }
         }
+
         return super.dispatchTouchEvent(ev);
     }
 
     private void loadPullRefreshScript(WebView view) {
+        Log.d(TAG, "Loading pull-refresh.js");
         String js = "(function(){" +
             "var s=document.createElement('script');" +
             "s.src='file:///android_asset/public/assets/pull-refresh.js';" +
-            "s.onload=function(){if(window.__setPullProgress)window.__setPullProgress(0);};" +
+            "s.onload=function(){console.log('pull-refresh.js loaded');};" +
+            "s.onerror=function(){console.log('pull-refresh.js FAILED');};" +
             "document.head.appendChild(s);" +
             "})();";
         view.evaluateJavascript(js, null);
