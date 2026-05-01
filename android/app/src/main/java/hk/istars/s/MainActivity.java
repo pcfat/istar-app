@@ -23,7 +23,7 @@ public class MainActivity extends BridgeActivity {
     private ActivityResultLauncher<String> notificationPermissionLauncher;
     private WebView webView;
     private float touchStartY = 0;
-    private boolean isPulling = false;
+    private boolean isAtTop = true;
     private long lastPullTime = 0;
 
     @Override
@@ -53,13 +53,15 @@ public class MainActivity extends BridgeActivity {
             webView.setWebViewClient(new WebViewClient() {
                 @Override
                 public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-                    if (request.isForMainFrame()) {
+                    // Only handle real errors, not our internal reload URL
+                    if (request.isForMainFrame() && !request.getUrl().toString().startsWith("istar://")) {
                         view.loadUrl("file:///android_asset/public/error.html");
                     }
                 }
 
                 @Override
                 public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                    // Handle our pull-to-refresh URL scheme
                     if ("istar://refresh".equals(url)) {
                         view.reload();
                         return true;
@@ -104,30 +106,18 @@ public class MainActivity extends BridgeActivity {
     public boolean dispatchTouchEvent(MotionEvent ev) {
         if (ev.getAction() == MotionEvent.ACTION_DOWN) {
             touchStartY = ev.getY();
-            isPulling = false;
-        } else if (ev.getAction() == MotionEvent.ACTION_MOVE) {
+        } else if (ev.getAction() == MotionEvent.ACTION_UP) {
             float deltaY = ev.getY() - touchStartY;
-            if (deltaY > 120 && !isPulling && isWebViewAtTop()) {
-                long now = System.currentTimeMillis();
-                if (now - lastPullTime > 2000) {
-                    isPulling = true;
-                    lastPullTime = now;
-                    triggerReload();
+            long now = System.currentTimeMillis();
+            // Only trigger if: pulled down >150px, was at top, and 2s have passed
+            if (deltaY > 150 && isAtTop && (now - lastPullTime) > 2000) {
+                lastPullTime = now;
+                if (webView != null) {
+                    webView.reload();
                 }
             }
         }
         return super.dispatchTouchEvent(ev);
-    }
-
-    private boolean isWebViewAtTop() {
-        if (webView == null) return false;
-        return webView.getScrollY() <= 20;
-    }
-
-    private void triggerReload() {
-        if (webView != null) {
-            webView.loadUrl("istar://refresh");
-        }
     }
 
     private void injectPullRefreshScript(WebView view) {
@@ -135,7 +125,7 @@ public class MainActivity extends BridgeActivity {
             "var s=0;document.addEventListener('touchstart',function(e){s=e.touches[0].pageY;},false);" +
             "document.addEventListener('touchmove',function(e){" +
             "  var d=e.touches[0].pageY-s;" +
-            "  if(d>100&&s<80&&window.scrollY<10){" +
+            "  if(d>120&&s<80&&window.scrollY<10){" +
             "    window.location='istar://refresh';" +
             "  }" +
             "},false);" +
