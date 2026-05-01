@@ -26,7 +26,6 @@ public class MainActivity extends BridgeActivity {
     private float touchStartY = 0;
     private long lastPullTime = 0;
     private boolean isPulling = false;
-    private float pullProgress = 0;
 
     @Override
     @SuppressLint("SetJavaScriptEnabled")
@@ -63,7 +62,6 @@ public class MainActivity extends BridgeActivity {
                 @Override
                 public void onPageFinished(WebView view, String url) {
                     super.onPageFinished(view, url);
-                    injectPullRefreshUI(view);
                     injectFcmToken(view);
                 }
             });
@@ -101,66 +99,21 @@ public class MainActivity extends BridgeActivity {
         if (action == MotionEvent.ACTION_DOWN) {
             touchStartY = y;
             isPulling = false;
-            pullProgress = 0;
         } else if (action == MotionEvent.ACTION_MOVE) {
             float deltaY = y - touchStartY;
-            if (deltaY > 0) {
-                pullProgress = Math.min(deltaY / 150, 1.0f);
-                if (pullProgress > 0.05f && webView != null) {
-                    webView.evaluateJavascript(
-                        "if(window.__setPullProgress){window.__setPullProgress(" + pullProgress + ");}else{console.log('no __setPullProgress');}",
-                        null
-                    );
-                }
-                if (deltaY > 150) {
-                    long now = System.currentTimeMillis();
-                    if (now - lastPullTime > 2000) {
-                        isPulling = true;
-                        lastPullTime = now;
-                        Toast.makeText(this, "正在刷新...", Toast.LENGTH_SHORT).show();
-                        if (webView != null) {
-                            webView.evaluateJavascript(
-                                "if(window.__setRefreshing){window.__setRefreshing(true);}else{console.log('no __setRefreshing');}",
-                                null
-                            );
-                            webView.reload();
-                        }
+            if (deltaY > 150) {
+                long now = System.currentTimeMillis();
+                if (now - lastPullTime > 2000) {
+                    isPulling = true;
+                    lastPullTime = now;
+                    Toast.makeText(this, "正在重新加載頁面...", Toast.LENGTH_SHORT).show();
+                    if (webView != null) {
+                        webView.reload();
                     }
                 }
             }
-        } else if (action == MotionEvent.ACTION_UP) {
-            if (!isPulling && webView != null) {
-                webView.evaluateJavascript("if(window.__setPullProgress){window.__setPullProgress(0);}", null);
-            }
         }
         return super.dispatchTouchEvent(ev);
-    }
-
-    private void injectPullRefreshUI(WebView view) {
-        String js = "javascript:(function(){" +
-            "if(window.__pullReady)return;" +
-            "window.__pullReady=true;" +
-            "var c=document.createElement('div');" +
-            "c.innerHTML='<div style=\"position:fixed;top:0;left:0;right:0;height:56px;display:flex;align-items:center;justify-content:center;z-index:2147483647;pointer-events:none;opacity:0;background:linear-gradient(135deg,#2196F3,#64B5F6);box-shadow:0 2px 8px rgba(0,0,0,0.15);\">" +
-            "<div id=\"_ps\" style=\"width:24px;height:24px;border-radius:50%;border:3px solid rgba(255,255,255,0.4);border-top-color:white;transform:scale(0);transition:transform 0.2s;\"></div>" +
-            "<span id=\"_pt\" style=\"color:white;margin-left:12px;font-size:14px;font-weight:500;opacity:0;\">釋放以重新整理</span>" +
-            "</div>';" +
-            "document.body.appendChild(c);" +
-            "var s=document.getElementById('_ps');" +
-            "var t=document.getElementById('_pt');" +
-            "window.__setPullProgress=function(p){" +
-            "  if(p<0.08){c.style.opacity='0';s.style.transform='scale(0)';t.style.opacity='0';}" +
-            "  else{c.style.opacity='1';s.style.transform='scale('+Math.min(p,1)+')';t.style.opacity=(p>0.4)?'1':'0';if(p>=1){s.style.transform='scale(1)';s.style.borderTopColor='transparent';s.style.borderRightColor='white';s.style.animation='_spin 0.6s linear infinite';}}" +
-            "};" +
-            "window.__setRefreshing=function(v){" +
-            "  if(v){c.style.opacity='1';s.style.transform='scale(1)';s.style.borderTopColor='transparent';s.style.borderRightColor='white';s.style.animation='_spin 0.6s linear infinite';t.style.opacity='1';t.textContent='正在重新整理...';}" +
-            "  else{c.style.opacity='0';s.style.transform='scale(0)';t.textContent='釋放以重新整理';setTimeout(function(){s.style.animation='';s.style.borderTopColor='white';s.style.borderRightColor='transparent';t.style.opacity='0';},300);}" +
-            "};" +
-            "var st=document.createElement('style');" +
-            "st.textContent='@keyframes _spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}';" +
-            "document.head.appendChild(st);" +
-            "})();";
-        view.evaluateJavascript(js, null);
     }
 
     private void injectFcmToken(WebView view) {
