@@ -35,6 +35,18 @@ public class MainActivity extends BridgeActivity {
             }
         }
 
+        // Request battery optimization exemption
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Intent intent = new Intent();
+            intent.setAction(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+            intent.setData(android.net.Uri.parse("package:" + getPackageName()));
+            try {
+                startActivity(intent);
+            } catch (Exception e) {
+                // Some devices don't support this, ignore
+            }
+        }
+
         // Create notification channel
         createNotificationChannel();
 
