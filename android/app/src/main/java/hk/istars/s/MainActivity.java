@@ -73,6 +73,7 @@ public class MainActivity extends BridgeActivity {
                 @Override
                 public void onPageFinished(WebView view, String url) {
                     super.onPageFinished(view, url);
+                    checkCookies(view);
                     injectFcmToken(view);
                 }
             });
@@ -125,6 +126,11 @@ public class MainActivity extends BridgeActivity {
             }
         }
         return super.dispatchTouchEvent(ev);
+    }
+
+    private void checkCookies(WebView view) {
+        String js = "(function(){var c=document.cookie;console.log('COOKIES:'+c);return c;})();";
+        view.evaluateJavascript(js, null);
     }
 
     private void injectFcmToken(WebView view) {
