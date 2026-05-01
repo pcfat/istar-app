@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.MotionEvent;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
@@ -21,6 +22,9 @@ public class MainActivity extends BridgeActivity {
 
     private ActivityResultLauncher<String> notificationPermissionLauncher;
     private WebView webView;
+    private float touchStartY = 0;
+    private boolean isPulling = false;
+    private long lastPullTime = 0;
 
     @Override
     @SuppressLint("SetJavaScriptEnabled")
@@ -56,7 +60,7 @@ public class MainActivity extends BridgeActivity {
 
                 @Override
                 public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                    if (url.startsWith("istar://pull_refresh")) {
+                    if ("istar://refresh".equals(url)) {
                         view.reload();
                         return true;
                     }
@@ -96,21 +100,46 @@ public class MainActivity extends BridgeActivity {
             });
     }
 
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        if (ev.getAction() == MotionEvent.ACTION_DOWN) {
+            touchStartY = ev.getY();
+            isPulling = false;
+        } else if (ev.getAction() == MotionEvent.ACTION_MOVE) {
+            float deltaY = ev.getY() - touchStartY;
+            if (deltaY > 120 && !isPulling && isWebViewAtTop()) {
+                long now = System.currentTimeMillis();
+                if (now - lastPullTime > 2000) {
+                    isPulling = true;
+                    lastPullTime = now;
+                    triggerReload();
+                }
+            }
+        }
+        return super.dispatchTouchEvent(ev);
+    }
+
+    private boolean isWebViewAtTop() {
+        if (webView == null) return false;
+        return webView.getScrollY() <= 20;
+    }
+
+    private void triggerReload() {
+        if (webView != null) {
+            webView.loadUrl("istar://refresh");
+        }
+    }
+
     private void injectPullRefreshScript(WebView view) {
-        String script = "(function(){" +
-            "var startY=0,lastY=0;" +
-            "document.addEventListener('touchstart',function(e){startY=e.touches[0].pageY;lastY=startY;},false);" +
+        String script = "javascript:(function(){" +
+            "var s=0;document.addEventListener('touchstart',function(e){s=e.touches[0].pageY;},false);" +
             "document.addEventListener('touchmove',function(e){" +
-            "  var y=e.touches[0].pageY;" +
-            "  if(y>lastY&&y-startY>80&&startY<80&&window.scrollY<10){" +
-            "    lastY=y;" +
-            "    window.location='istar://pull_refresh';" +
-            "  } else {" +
-            "    lastY=y;" +
+            "  var d=e.touches[0].pageY-s;" +
+            "  if(d>100&&s<80&&window.scrollY<10){" +
+            "    window.location='istar://refresh';" +
             "  }" +
             "},false);" +
             "})();";
-
         view.evaluateJavascript(script, null);
     }
 
