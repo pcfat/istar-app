@@ -128,7 +128,7 @@ public class MainActivity extends BridgeActivity {
     }
 
     private void checkCookies(WebView view) {
-        String js = "(function(){var c=document.cookie;alert('COOKIES:" + (char)34 + "'+c);})();";
+        String js = "(function(){var c=document.cookie;var tc=[];c.split(';').forEach(function(c2){var kv=c2.split('=');if(kv.length>1)tc.push(kv[0].trim()+'='+kv[1].trim().substring(0,10)+'...');});alert('COOKIES:'+(tc.length>0?tc.join('|'):'NONE'));})();";
         view.evaluateJavascript(js, null);
     }
 
