@@ -8,20 +8,17 @@ import android.webkit.WebView;
 
 public class PullableWebView extends WebView {
 
-    private float startY;
+    private float startY = 0;
     private boolean isAtTop = true;
-    private PullRefreshCallback callback;
+    private OnPullToRefreshListener listener;
+    private boolean isPulling = false;
 
-    public interface PullRefreshCallback {
+    public interface OnPullToRefreshListener {
         void onPullToRefresh();
     }
 
-    public void setPullRefreshCallback(PullRefreshCallback callback) {
-        this.callback = callback;
-    }
-
-    public void setAtTop(boolean atTop) {
-        this.isAtTop = atTop;
+    public void setOnPullToRefreshListener(OnPullToRefreshListener listener) {
+        this.listener = listener;
     }
 
     public PullableWebView(Context context) {
@@ -42,16 +39,31 @@ public class PullableWebView extends WebView {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 startY = event.getY();
+                isPulling = false;
                 break;
             case MotionEvent.ACTION_MOVE:
-                float currentY = event.getY();
-                float deltaY = currentY - startY;
-                // Pulling down from top of page
-                if (isAtTop && deltaY > 0 && callback != null) {
-                    callback.onPullToRefresh();
+                if (!isPulling && isAtTop) {
+                    float currentY = event.getY();
+                    float deltaY = currentY - startY;
+                    // Pulling down more than 100px from top
+                    if (deltaY > 100) {
+                        isPulling = true;
+                        if (listener != null) {
+                            listener.onPullToRefresh();
+                        }
+                    }
                 }
                 break;
         }
         return super.onTouchEvent(event);
+    }
+
+    @Override
+    protected void onScrollChanged(int l, int t, int oldl, int oldt) {
+        super.onScrollChanged(l, t, oldl, oldt);
+        isAtTop = (t <= 0);
+        if (t > 0) {
+            isPulling = false;
+        }
     }
 }

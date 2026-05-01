@@ -7,7 +7,6 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.view.MotionEvent;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
@@ -22,7 +21,6 @@ public class MainActivity extends BridgeActivity {
 
     private ActivityResultLauncher<String> notificationPermissionLauncher;
     private WebView webView;
-    private boolean isPulling = false;
 
     @Override
     @SuppressLint("SetJavaScriptEnabled")
@@ -47,7 +45,6 @@ public class MainActivity extends BridgeActivity {
         if (webView != null) {
             webView.getSettings().setJavaScriptEnabled(true);
             webView.getSettings().setDomStorageEnabled(true);
-            webView.setHorizontalScrollBarEnabled(false);
 
             webView.setWebViewClient(new WebViewClient() {
                 @Override
@@ -56,26 +53,22 @@ public class MainActivity extends BridgeActivity {
                         view.loadUrl("file:///android_asset/public/error.html");
                     }
                 }
-            });
 
-            // Manual pull-to-refresh using WebView touch
-            webView.setOnTouchListener((v, event) -> {
-                float startY = event.getY();
-                switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        startY = event.getY();
-                        break;
-                    case MotionEvent.ACTION_MOVE:
-                        float currentY = event.getY();
-                        float deltaY = currentY - startY;
-                        // User pulling down from top of page
-                        if (deltaY > 80 && isAtTop() && !isPulling) {
-                            isPulling = true;
-                            reloadAndReset();
-                        }
-                        break;
+                @Override
+                public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                    if (url.startsWith("istar://pull_refresh")) {
+                        view.reload();
+                        return true;
+                    }
+                    return false;
                 }
-                return false;
+
+                @Override
+                public void onPageFinished(WebView view, String url) {
+                    super.onPageFinished(view, url);
+                    injectPullRefreshScript(view);
+                    injectFcmToken(view);
+                }
             });
         }
 
@@ -103,17 +96,32 @@ public class MainActivity extends BridgeActivity {
             });
     }
 
-    private boolean isAtTop() {
-        if (webView == null) return true;
-        return webView.getScrollY() <= 10;
+    private void injectPullRefreshScript(WebView view) {
+        String script = "(function(){" +
+            "var startY=0,lastY=0;" +
+            "document.addEventListener('touchstart',function(e){startY=e.touches[0].pageY;lastY=startY;},false);" +
+            "document.addEventListener('touchmove',function(e){" +
+            "  var y=e.touches[0].pageY;" +
+            "  if(y>lastY&&y-startY>80&&startY<80&&window.scrollY<10){" +
+            "    lastY=y;" +
+            "    window.location='istar://pull_refresh';" +
+            "  } else {" +
+            "    lastY=y;" +
+            "  }" +
+            "},false);" +
+            "})();";
+
+        view.evaluateJavascript(script, null);
     }
 
-    private void reloadAndReset() {
-        if (webView != null) {
-            webView.reload();
-            // Reset pull state after 2 seconds
-            new Handler(getMainLooper()).postDelayed(() -> isPulling = false, 2000);
-        }
+    private void injectFcmToken(WebView view) {
+        FirebaseMessaging.getInstance().getToken()
+            .addOnCompleteListener(task -> {
+                if (!task.isSuccessful() || task.getResult() == null) return;
+                String token = task.getResult().replace("'", "\\'");
+                String js = "if(typeof window.__registerFCMToken==='function'){window.__registerFCMToken('" + token + "');}";
+                view.post(() -> view.evaluateJavascript(js, null));
+            });
     }
 
     private void createNotificationChannel() {
