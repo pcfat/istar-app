@@ -6,19 +6,10 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <ScrollView
+    <WebView
+        android:id="@+id/main_webview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fillViewport="true"
-        android:overScrollMode="if_content_scrolls">
-
-        <WebView
-            android:id="@+id/main_webview"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:scrollbars="vertical"
-            android:overScrollMode="if_content_scrolls" />
-
-    </ScrollView>
+        android:scrollbars="vertical" />
 
 </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
