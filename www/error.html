@@ -25,18 +25,14 @@
             min-height: 100vh;
             height: 100vh;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            padding: 0;
+            padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
             margin: 0;
             -webkit-tap-highlight-color: transparent;
             color: var(--text-color);
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
         }
 
         .container {
@@ -46,7 +42,9 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
+            min-height: auto;
+            flex: 1;
+            align-items: stretch;
         }
 
         .main-content {
@@ -143,7 +141,7 @@
                 </div>
 
                 <h2 class="error-title">無網絡連接</h2>
-                <p class="error-message">無法連接到網絡，請檢查您的<br>網絡連接後重試。</p>
+                <p class="error-message">無法連接到網絡，<br>請檢查您的網絡連接後重試。</p>
 
                 <button type="button" class="btn-reload" onclick="window.location.href='https://s.istars.hk/app/index.php'">
                     <svg viewBox="0 0 512 512" width="20" height="20" xmlns="http://www.w3.org/2000/svg">

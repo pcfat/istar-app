@@ -20,6 +20,7 @@ import com.google.firebase.messaging.FirebaseMessaging;
 public class MainActivity extends BridgeActivity {
 
     private SwipeRefreshLayout swipeRefreshLayout;
+    private WebView webView;
     private ActivityResultLauncher<String> notificationPermissionLauncher;
 
     @Override
@@ -44,20 +45,8 @@ public class MainActivity extends BridgeActivity {
         }
 
         swipeRefreshLayout = findViewById(R.id.swipe_refresh);
-        if (swipeRefreshLayout != null) {
-            swipeRefreshLayout.setColorSchemeResources(
-                android.R.color.holo_blue_bright,
-                android.R.color.holo_blue_light
-            );
-            swipeRefreshLayout.setOnRefreshListener(() -> {
-                WebView webView = getBridge().getWebView();
-                if (webView != null) webView.reload();
-                swipeRefreshLayout.postDelayed(() -> swipeRefreshLayout.setRefreshing(false), 1500);
-            });
-        }
+        webView = findViewById(R.id.main_webview);
 
-        // Set WebViewClient to show error.html on network failure
-        WebView webView = getBridge().getWebView();
         if (webView != null) {
             webView.setWebViewClient(new WebViewClient() {
                 @Override
@@ -66,6 +55,19 @@ public class MainActivity extends BridgeActivity {
                         view.loadUrl("file:///android_asset/public/error.html");
                     }
                 }
+            });
+        }
+
+        if (swipeRefreshLayout != null) {
+            swipeRefreshLayout.setColorSchemeResources(
+                android.R.color.holo_blue_bright,
+                android.R.color.holo_blue_light
+            );
+            swipeRefreshLayout.setOnRefreshListener(() -> {
+                if (webView != null) {
+                    webView.reload();
+                }
+                swipeRefreshLayout.postDelayed(() -> swipeRefreshLayout.setRefreshing(false), 1500);
             });
         }
 
@@ -79,7 +81,6 @@ public class MainActivity extends BridgeActivity {
                     @Override
                     public void run() {
                         attempts++;
-                        WebView webView = getBridge().getWebView();
                         if (webView != null) {
                             String js = "if(typeof window.__registerFCMToken==='function'){window.__registerFCMToken('" + token + "');}";
                             webView.evaluateJavascript(js, result -> {
