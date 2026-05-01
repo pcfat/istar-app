@@ -2,27 +2,22 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#2196F3">
     <title>無網絡連接 - i-STAR管理系統</title>
     <style>
         :root {
             --primary-color: #2563eb;
             --primary-dark: #1d4ed8;
             --secondary-color: #64748b;
-            --success-color: #10b981;
-            --background-color: #f8fafc;
-            --card-background: #ffffff;
-            --error-color: #ef4444;
             --text-color: #1e293b;
-            --gradient-start: #2563eb;
-            --gradient-end: #1d4ed8;
-            --accent-color: #f59e0b;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
         }
 
         body {
@@ -32,22 +27,22 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             padding: 0;
             margin: 0;
             -webkit-tap-highlight-color: transparent;
             color: var(--text-color);
-            position: relative;
-            overflow-x: hidden;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
         }
 
         .container {
             width: 100%;
-            max-width: 1200px;
-            padding: 0;
-            margin: 0;
-            position: relative;
-            z-index: 1;
+            max-width: 450px;
+            padding: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -56,30 +51,17 @@
 
         .main-content {
             width: 100%;
-            max-width: 450px;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(20px);
             border-radius: 24px;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
             overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            margin: 0 auto;
-            min-height: 0;
         }
 
         .error-section {
             padding: 3rem 2rem;
             background: white;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
             text-align: center;
-        }
-
-        .error-container {
-            width: 100%;
-            max-width: 400px;
-            margin: 0 auto;
         }
 
         .logo-container {
@@ -88,7 +70,7 @@
         }
 
         .logo-container img {
-            max-width: 200px;
+            max-width: 180px;
             height: auto;
         }
 
@@ -116,44 +98,15 @@
             font-weight: 600;
             font-size: 1rem;
             cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-            display: inline-flex;
+            display: flex;
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
-        }
-
-        .btn-reload::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: 0.5s;
-        }
-
-        .btn-reload:hover::before {
-            left: 100%;
-        }
-
-        .btn-reload:hover {
-            background: linear-gradient(90deg, #1976D2 0%, #42A5F5 100%);
-            box-shadow: 0 10px 25px rgba(33,150,243,0.18);
-            transform: translateY(-2px);
+            margin-top: 2rem;
         }
 
         .btn-reload:active {
-            transform: translateY(0);
-        }
-
-        .btn-reload svg {
-            width: 1.1rem;
-            height: 1.1rem;
-            fill: currentColor;
+            opacity: 0.9;
         }
 
         .footer-text {
@@ -163,43 +116,19 @@
             font-size: 0.8rem;
         }
 
-        @media (max-width: 768px) {
-            .main-content {
-                margin: 1rem;
-                border-radius: 16px;
-            }
-
-            .error-section {
-                padding: 2rem 1.5rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            body {
-                padding: 0.5rem;
-            }
-
-            .error-section {
-                padding: 1.5rem 1rem;
-            }
-
-            .error-title {
-                font-size: 1.5rem;
-            }
-
-            .btn-reload {
-                padding: 0.75rem 1rem;
-            }
-        }
-
         .bg-anim {
             position: fixed;
             border-radius: 50%;
-            opacity: 0.18;
+            opacity: 0.15;
             z-index: 0;
             pointer-events: none;
             filter: blur(2px);
-            animation-timing-function: ease-in-out;
+        }
+
+        @media (max-width: 480px) {
+            .error-section { padding: 2rem 1.5rem; }
+            .error-title { font-size: 1.5rem; }
+            .logo-container img { max-width: 150px; }
         }
     </style>
 </head>
@@ -209,26 +138,24 @@
     <div class="container">
         <div class="main-content">
             <div class="error-section">
-                <div class="error-container">
-                    <div class="logo-container">
-                        <img src="assets/logo.png" alt="星進教育 Logo">
-                    </div>
+                <div class="logo-container">
+                    <img src="assets/logo.png" alt="星進教育 Logo">
+                </div>
 
-                    <h2 class="error-title">無網絡連接</h2>
-                    <p class="error-message">
-                        無法連接到網絡，請檢查您的網絡連接後重試。
-                    </p>
+                <h2 class="error-title">無網絡連接</h2>
+                <p class="error-message">
+                    無法連接到網絡，請檢查您的網絡連接後重試。
+                </p>
 
-                    <button type="button" class="btn-reload" onclick="window.location.reload()">
-                        <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M463.5 224H472c13.3 0 24-10.7 24-24V72c0-9.7-5.8-18.5-14.8-22.2s-19.3-1.7-26.2 5.2L413.4 96.6c-87.6-86.5-228.7-86.2-316.4 1c-87.5 87.5-87.5 229.3 0 316.8s229.3 87.5 316.8 0c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0c-62.5 62.5-163.8 62.5-226.3 0s-62.5-163.8 0-226.3c62.2-62.2 162.7-62.5 225.3-1L327 183c-6.9 6.9-8.9 17.2-5.2 26.2s12.5 14.8 22.2 14.8H463.5z"/>
-                        </svg>
-                        <span>重新載入</span>
-                    </button>
+                <button type="button" class="btn-reload" onclick="window.location.href='https://s.istars.hk/app/index.php'">
+                    <svg viewBox="0 0 512 512" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+                        <path fill="white" d="M463.5 224H472c13.3 0 24-10.7 24-24V72c0-9.7-5.8-18.5-14.8-22.2s-19.3-1.7-26.2 5.2L413.4 96.6c-87.6-86.5-228.7-86.2-316.4 1c-87.5 87.5-87.5 229.3 0 316.8s229.3 87.5 316.8 0c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0c-62.5 62.5-163.8 62.5-226.3 0s-62.5-163.8 0-226.3c62.2-62.2 162.7-62.5 225.3-1L327 183c-6.9 6.9-8.9 17.2-5.2 26.2s12.5 14.8 22.2 14.8H463.5z"/>
+                    </svg>
+                    重新載入
+                </button>
 
-                    <div class="footer-text">
-                        <p>© 2025 星進教育 i-STAR Education</p>
-                    </div>
+                <div class="footer-text">
+                    <p>© 2025 星進教育 i-STAR Education</p>
                 </div>
             </div>
         </div>
@@ -240,9 +167,9 @@
             var styleSheet = document.createElement('style');
             document.head.appendChild(styleSheet);
 
-            for (var i = 1; i <= 50; i++) {
-                var size = Math.floor(Math.random() * (180 - 40 + 1)) + 40;
-                var opacity = (Math.floor(Math.random() * (18 - 7 + 1)) + 7) / 100;
+            for (var i = 1; i <= 20; i++) {
+                var size = Math.floor(Math.random() * (150 - 40 + 1)) + 40;
+                var opacity = (Math.floor(Math.random() * (15 - 7 + 1)) + 7) / 100;
                 var leftOrRight = Math.random() < 0.5 ? 'left' : 'right';
                 var topOrBottom = Math.random() < 0.5 ? 'top' : 'bottom';
                 var lrVal = Math.floor(Math.random() * 101);
@@ -269,25 +196,23 @@
                 circle.className = 'bg-anim bg-anim' + i;
                 container.appendChild(circle);
 
-                var css = '\n' +
-                    '.bg-anim' + i + ' {\n' +
-                    '    width: ' + size + 'px;\n' +
-                    '    height: ' + size + 'px;\n' +
-                    '    background: radial-gradient(circle, ' + color1 + ' 60%, ' + color2 + ' 100%);\n' +
-                    '    opacity: ' + opacity + ';\n' +
-                    '    position: fixed;\n' +
-                    '    ' + leftOrRight + ': ' + lrVal + 'vw;\n' +
-                    '    ' + topOrBottom + ': ' + tbVal + 'vh;\n' +
-                    '    animation: ' + anim + ' ' + duration + 's infinite linear;\n' +
-                    '}\n' +
-                    '@keyframes ' + anim + ' {\n' +
-                    '    0%   { transform: translate(' + tx0 + 'px,' + ty0 + 'px) scale(' + sc0 + '); }\n' +
-                    '    25%  { transform: translate(' + tx25 + 'px,' + ty25 + 'px) scale(' + sc25 + '); }\n' +
-                    '    50%  { transform: translate(' + tx50 + 'px,' + ty50 + 'px) scale(' + sc50 + '); }\n' +
-                    '    75%  { transform: translate(' + tx75 + 'px,' + ty75 + 'px) scale(' + sc75 + '); }\n' +
-                    '    100% { transform: translate(' + tx0 + 'px,' + ty0 + 'px) scale(' + sc0 + '); }\n' +
-                    '}\n';
-                styleSheet.textContent += css;
+                styleSheet.textContent +=
+                    '.bg-anim' + i + ' {' +
+                    ' width:' + size + 'px;height:' + size + 'px;' +
+                    ' background:radial-gradient(circle,' + color1 + ' 60%,' + color2 + ' 100%);' +
+                    ' opacity:' + opacity + ';' +
+                    ' position:fixed;' +
+                    ' ' + leftOrRight + ':' + lrVal + 'vw;' +
+                    ' ' + topOrBottom + ':' + tbVal + 'vh;' +
+                    ' animation:' + anim + ' ' + duration + 's infinite linear;' +
+                    '}' +
+                    '@keyframes ' + anim + ' {' +
+                    ' 0%  {transform:translate(' + tx0 + 'px,' + ty0 + 'px) scale(' + sc0 + ')}' +
+                    ' 25% {transform:translate(' + tx25 + 'px,' + ty25 + 'px) scale(' + sc25 + ')}' +
+                    ' 50% {transform:translate(' + tx50 + 'px,' + ty50 + 'px) scale(' + sc50 + ')}' +
+                    ' 75% {transform:translate(' + tx75 + 'px,' + ty75 + 'px) scale(' + sc75 + ')}' +
+                    ' 100%{transform:translate(' + tx0 + 'px,' + ty0 + 'px) scale(' + sc0 + ')}' +
+                    '}';
             }
         }
 
