@@ -53,13 +53,16 @@ public class MainActivity extends BridgeActivity {
             webView.getSettings().setJavaScriptEnabled(true);
             webView.getSettings().setDomStorageEnabled(true);
             webView.getSettings().setAllowFileAccess(true);
-            webView.getSettings().setAcceptThirdPartyCookies(true);
 
             CookieManager cookieManager = CookieManager.getInstance();
             cookieManager.setAcceptCookie(true);
             cookieManager.setAcceptFileSchemeCookies(true);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 cookieManager.flush();
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                webView.setAcceptThirdPartyCookies(true);
             }
 
             webView.setWebViewClient(new WebViewClient() {
