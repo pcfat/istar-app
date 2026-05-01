@@ -51,6 +51,9 @@ public class MainActivity extends BridgeActivity {
             webView.getSettings().setJavaScriptEnabled(true);
             webView.getSettings().setDomStorageEnabled(true);
 
+            // Inject pull refresh UI immediately
+            injectPullRefreshUI(webView);
+
             webView.setWebViewClient(new WebViewClient() {
                 @Override
                 public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
