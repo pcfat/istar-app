@@ -129,7 +129,7 @@ public class MainActivity extends BridgeActivity {
     }
 
     private void checkCookies(WebView view) {
-        String js = "(function(){var c=document.cookie;console.log('COOKIES:'+c);return c;})();";
+        String js = "(function(){var c=document.cookie;alert('COOKIES:" + (char)34 + "'+c);})();";
         view.evaluateJavascript(js, null);
     }
 
