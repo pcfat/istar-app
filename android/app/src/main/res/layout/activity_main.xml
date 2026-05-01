@@ -4,16 +4,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <androidx.core.widget.NestedScrollView
+    <WebView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fillViewport="true">
-
-        <WebView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:nestedScrollingEnabled="true" />
-
-    </androidx.core.widget.NestedScrollView>
+        android:layout_height="match_parent" />
 
 </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
