@@ -25,11 +25,13 @@ public class ScrollableWebView extends WebView {
 
     public void setSwipeRefreshLayout(SwipeRefreshLayout layout) {
         this.swipeRefreshLayout = layout;
-        setOnScrollChangeListener((v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
-            if (swipeRefreshLayout != null) {
-                swipeRefreshLayout.setEnabled(scrollY == 0);
-            }
-        });
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            setOnScrollChangeListener((v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
+                if (swipeRefreshLayout != null) {
+                    swipeRefreshLayout.setEnabled(scrollY == 0);
+                }
+            });
+        }
     }
 
     @SuppressLint("ClickableViewAccessibility")

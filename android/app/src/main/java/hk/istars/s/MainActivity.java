@@ -3,9 +3,7 @@ package hk.istars.s;
 import android.annotation.SuppressLint;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -30,61 +28,70 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Request notification permission for Android 13+
+        // Register permission launcher after super.onCreate
         notificationPermissionLauncher = registerForActivityResult(
             new ActivityResultContracts.RequestPermission(),
             granted -> {}
         );
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS)
-                    != PackageManager.PERMISSION_GRANTED) {
-                notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS);
+
+        // Setup SwipeRefreshLayout
+        swipeRefreshLayout = findViewById(R.id.swipe_refresh);
+        if (swipeRefreshLayout != null) {
+            swipeRefreshLayout.setColorSchemeResources(
+                android.R.color.holo_blue_bright,
+                android.R.color.holo_blue_light
+            );
+        }
+
+        // Get WebView safely
+        WebView webView = findViewById(R.id.main_webview);
+        if (webView == null) {
+            webView = getBridge().getWebView();
+        }
+
+        if (webView != null) {
+            webView.getSettings().setJavaScriptEnabled(true);
+            webView.getSettings().setDomStorageEnabled(true);
+
+            // Custom ScrollableWebView for proper swipe detection
+            if (webView instanceof ScrollableWebView) {
+                ((ScrollableWebView) webView).setSwipeRefreshLayout(swipeRefreshLayout);
+            }
+
+            // Set WebViewClient for error handling
+            webView.setWebViewClient(new WebViewClient() {
+                @Override
+                public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                    if (request.isForMainFrame()) {
+                        view.loadUrl("file:///android_asset/public/error.html");
+                    }
+                }
+
+                @Override
+                public void onPageFinished(WebView view, String url) {
+                    super.onPageFinished(view, url);
+                    injectFcmToken(view);
+                }
+            });
+
+            if (swipeRefreshLayout != null) {
+                swipeRefreshLayout.setOnRefreshListener(() -> {
+                    webView.reload();
+                    swipeRefreshLayout.postDelayed(() -> swipeRefreshLayout.setRefreshing(false), 1500);
+                });
             }
         }
 
         // Create notification channel
         createNotificationChannel();
 
-        // Setup SwipeRefreshLayout
-        swipeRefreshLayout = findViewById(R.id.swipe_refresh);
-        swipeRefreshLayout.setColorSchemeResources(
-            android.R.color.holo_blue_bright,
-            android.R.color.holo_blue_light
-        );
-
-        // Setup WebView with error handling
-        WebView webView = findViewById(R.id.main_webview);
-        if (webView == null) webView = getBridge().getWebView();
-        final WebView wv = webView;
-        webView.getSettings().setJavaScriptEnabled(true);
-        webView.getSettings().setDomStorageEnabled(true);
-
-        // Custom ScrollableWebView for proper swipe detection
-        if (webView instanceof ScrollableWebView) {
-            ((ScrollableWebView) webView).setSwipeRefreshLayout(swipeRefreshLayout);
+        // Request notification permission for Android 13+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS);
+            }
         }
-
-        // Set WebViewClient for error handling
-        webView.setWebViewClient(new WebViewClient() {
-            @Override
-            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-                if (request.isForMainFrame()) {
-                    // Try loading error.html, fallback to data URI
-                    view.loadUrl("file:///android_asset/public/error.html");
-                }
-            }
-
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
-                injectFcmToken(view);
-            }
-        });
-
-        swipeRefreshLayout.setOnRefreshListener(() -> {
-            wv.reload();
-            swipeRefreshLayout.postDelayed(() -> swipeRefreshLayout.setRefreshing(false), 1500);
-        });
 
         // FCM token injection with retry
         FirebaseMessaging.getInstance().getToken()
