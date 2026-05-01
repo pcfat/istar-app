@@ -25,6 +25,7 @@ public class MainActivity extends BridgeActivity {
     private float touchStartY = 0;
     private long lastPullTime = 0;
     private boolean isPulling = false;
+    private float pullProgress = 0;
     private Handler handler = new Handler();
 
     @Override
@@ -97,59 +98,80 @@ public class MainActivity extends BridgeActivity {
         if (ev.getAction() == MotionEvent.ACTION_DOWN) {
             touchStartY = ev.getY();
             isPulling = false;
+            pullProgress = 0;
         } else if (ev.getAction() == MotionEvent.ACTION_MOVE) {
             float deltaY = ev.getY() - touchStartY;
-            if (deltaY > 50 && !isPulling) {
-                // Show pull indicator
-                if (webView != null) {
-                    webView.evaluateJavascript("if(window.__showPullIndicator)window.__showPullIndicator();", null);
-                }
-            }
-            if (deltaY > 150) {
-                long now = System.currentTimeMillis();
-                if (now - lastPullTime > 2000) {
-                    isPulling = true;
-                    lastPullTime = now;
-                    // Trigger reload
+            if (deltaY > 0) {
+                pullProgress = Math.min(deltaY / 150, 1.0f);
+                if (pullProgress > 0.05f) {
                     if (webView != null) {
-                        webView.evaluateJavascript("if(window.__hidePullIndicator)window.__hidePullIndicator();", null);
-                        webView.reload();
+                        webView.evaluateJavascript("if(window.__setPullProgress)window.__setPullProgress(" + pullProgress + ");", null);
+                    }
+                }
+                if (deltaY > 150) {
+                    long now = System.currentTimeMillis();
+                    if (now - lastPullTime > 2000) {
+                        isPulling = true;
+                        lastPullTime = now;
+                        pullProgress = 1.0f;
+                        if (webView != null) {
+                            webView.evaluateJavascript("if(window.__setRefreshing)window.__setRefreshing(true);", null);
+                            webView.reload();
+                        }
                     }
                 }
             }
         } else if (ev.getAction() == MotionEvent.ACTION_UP) {
-            // Hide indicator
-            handler.postDelayed(() -> {
+            if (!isPulling && pullProgress < 0.5f) {
                 if (webView != null) {
-                    webView.evaluateJavascript("if(window.__hidePullIndicator)window.__hidePullIndicator();", null);
+                    webView.evaluateJavascript("if(window.__setPullProgress)window.__setPullProgress(0);", null);
                 }
-            }, 500);
+            }
         }
         return super.dispatchTouchEvent(ev);
     }
 
     private void injectPullRefreshUI(WebView view) {
-        String css = "javascript:(function(){" +
-            "var indicator=null,spinner=null,isShowing=false;" +
-            "window.__showPullIndicator=function(){" +
-            "  if(isShowing)return;isShowing=true;" +
-            "  indicator=document.createElement('div');" +
-            "  indicator.id='__pull_indicator__';" +
-            "  indicator.innerHTML='<div style=\"position:fixed;top:0;left:0;right:0;z-index:9999999;background:linear-gradient(135deg,#2196F3,#6EC6FF);color:white;text-align:center;padding:12px;font-family:-apple-system,sans-serif;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 2px 8px rgba(0,0,0,0.15);\">" +
-            "    <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" style=\"animation:__spin 1s linear infinite\"><path fill=\"white\" d=\"M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z\"/></svg>" +
-            "    <span>釋放以重新整理...</span>" +
-            "  </div>';" +
-            "  var style=document.createElement('style');" +
-            "  style.textContent='@keyframes __spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}';" +
-            "  document.head.appendChild(style);" +
-            "  document.body.appendChild(indicator);" +
+        String js = "javascript:(function(){" +
+            "var container=null,spinnerEl=null,progressEl=null,refreshing=false;" +
+            "function createUI(){" +
+            "  container=document.createElement('div');" +
+            "  container.id='__pull_container__';" +
+            "  container.innerHTML='<div style=\"position:fixed;top:0;left:0;right:0;height:60px;display:flex;align-items:center;justify-content:center;z-index:9999999;pointer-events:none;opacity:0;transition:opacity 0.2s;\">' +
+            "    <div id=\"__pull_circle__\" style=\"width:28px;height:28px;border-radius:50%;border:3px solid rgba(33,150,243,0.3);border-top-color:#2196F3;transform:scale(0);\"></div>" +
+            "  </div>'; " +
+            "  document.body.appendChild(container);" +
+            "  spinnerEl=document.getElementById('__pull_circle__');" +
+            "}" +
+            "createUI();" +
+            "window.__setPullProgress=function(p){" +
+            "  if(refreshing)return;" +
+            "  if(p<0.05){container.style.opacity='0';spinnerEl.style.transform='scale(0)';return;}" +
+            "  container.style.opacity='1';" +
+            "  spinnerEl.style.transform='scale('+p+')';" +
+            "  if(p>=1){spinnerEl.style.transform='scale(1)';" +
+            "    spinnerEl.style.background='rgba(33,150,243,0.2)';" +
+            "    spinnerEl.innerHTML='<div style=\"width:100%;height:100%;border-radius:50%;border:3px solid transparent;border-top-color:#2196F3;animation:__spin 0.8s linear infinite;box-sizing:border-box;\"></div>';" +
+            "  }" +
             "};" +
-            "window.__hidePullIndicator=function(){" +
-            "  if(indicator){indicator.remove();indicator=null;}" +
-            "  isShowing=false;" +
+            "window.__setRefreshing=function(r){" +
+            "  refreshing=r;" +
+            "  if(r){" +
+            "    container.style.opacity='1';" +
+            "    spinnerEl.style.transform='scale(1.2)';" +
+            "    spinnerEl.style.background='rgba(33,150,243,0.3)';" +
+            "    spinnerEl.innerHTML='<div style=\"width:100%;height:100%;border-radius:50%;border:3px solid transparent;border-top-color:#2196F3;border-right-color:#2196F3;animation:__spin 0.6s linear infinite;box-sizing:border-box;\"></div>';" +
+            "  } else {" +
+            "    container.style.opacity='0';" +
+            "    spinnerEl.style.transform='scale(0)';" +
+            "    setTimeout(function(){spinnerEl.innerHTML='';spinnerEl.style.background='';},300);" +
+            "  }" +
             "};" +
+            "var style=document.createElement('style');" +
+            "style.textContent='@keyframes __spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}';" +
+            "document.head.appendChild(style);" +
             "})();";
-        view.evaluateJavascript(css, null);
+        view.evaluateJavascript(js, null);
     }
 
     private void injectFcmToken(WebView view) {
