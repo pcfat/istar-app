@@ -1,5 +1,6 @@
 package hk.istars.s;
 
+import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -21,15 +22,14 @@ public class IstarMessagingService extends Service {
     public void onCreate() {
         super.onCreate();
         createNotificationChannel();
-        // Start as foreground to prevent system from killing us
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(NOTIFICATION_ID, buildNotification("星進教育", "通知服務運行中"));
+            Notification notification = buildNotification("星進教育", "通知服務運行中").build();
+            startForeground(NOTIFICATION_ID, notification);
         }
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        // Keep service alive
         return START_STICKY;
     }
 

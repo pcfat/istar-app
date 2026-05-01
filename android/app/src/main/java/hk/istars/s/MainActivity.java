@@ -3,11 +3,12 @@ package hk.istars.s;
 import android.annotation.SuppressLint;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.view.MotionEvent;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
@@ -43,11 +44,10 @@ public class MainActivity extends BridgeActivity {
 
         // Request battery optimization exemption
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            Intent intent = new Intent();
-            intent.setAction(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
-            intent.setData(android.net.Uri.parse("package:" + getPackageName()));
+            Intent battIntent = new Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+            battIntent.setData(Uri.parse("package:" + getPackageName()));
             try {
-                startActivity(intent);
+                startActivity(battIntent);
             } catch (Exception e) {
                 // Some devices don't support this, ignore
             }
