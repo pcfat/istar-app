@@ -61,10 +61,6 @@ public class MainActivity extends BridgeActivity {
                 cookieManager.flush();
             }
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                webView.setAcceptThirdPartyCookies(true);
-            }
-
             webView.setWebViewClient(new WebViewClient() {
                 @Override
                 public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
