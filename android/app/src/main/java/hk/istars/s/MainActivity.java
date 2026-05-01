@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.widget.Toast;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.webkit.WebResourceError;
@@ -111,22 +112,19 @@ public class MainActivity extends BridgeActivity {
             Log.d(TAG, "TOUCH DOWN touchStartY=" + touchStartY);
         } else if (action == MotionEvent.ACTION_MOVE) {
             float deltaY = y - touchStartY;
-            Log.d(TAG, "TOUCH MOVE deltaY=" + deltaY);
-
             if (deltaY > 0) {
                 pullProgress = Math.min(deltaY / 150, 1.0f);
                 if (pullProgress > 0.05f && webView != null) {
-                    String js = "if(window.__setPullProgress){window.__setPullProgress(" + pullProgress + ");}else{console.log('NOT FOUND: __setPullProgress');}";
-                    webView.evaluateJavascript(js, null);
+                    webView.evaluateJavascript("if(window.__setPullProgress){window.__setPullProgress(" + pullProgress + ");}else{console.log('NOT FOUND');}", null);
                 }
                 if (deltaY > 150) {
                     long now = System.currentTimeMillis();
                     if (now - lastPullTime > 2000) {
                         isPulling = true;
                         lastPullTime = now;
-                        Log.d(TAG, "PULL TRIGGER RELOAD");
+                        Toast.makeText(this, "正在刷新...", Toast.LENGTH_SHORT).show();
                         if (webView != null) {
-                            webView.evaluateJavascript("if(window.__setRefreshing){window.__setRefreshing(true);}else{console.log('NOT FOUND: __setRefreshing');}", null);
+                            webView.evaluateJavascript("if(window.__setRefreshing){window.__setRefreshing(true);}else{console.log('NOT FOUND');}", null);
                             webView.reload();
                         }
                     }
