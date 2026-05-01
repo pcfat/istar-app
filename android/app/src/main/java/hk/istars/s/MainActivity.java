@@ -8,6 +8,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.MotionEvent;
+import android.webkit.CookieManager;
+import android.webkit.CookieSyncManager;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
@@ -50,6 +52,16 @@ public class MainActivity extends BridgeActivity {
         if (webView != null) {
             webView.getSettings().setJavaScriptEnabled(true);
             webView.getSettings().setDomStorageEnabled(true);
+            webView.getSettings().setAllowFileFromInternetContentURL(true);
+            webView.getSettings().setAllowFileAccess(true);
+
+            CookieManager cookieManager = CookieManager.getInstance();
+            cookieManager.setAcceptCookie(true);
+            cookieManager.setAcceptFileSchemeCookies(true);
+            cookieManager.setCookieAcceptPolicy(CookieManager.COOKIE_POLICY_ACCEPT_ALL);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                cookieManager.flush();
+            }
 
             webView.setWebViewClient(new WebViewClient() {
                 @Override
