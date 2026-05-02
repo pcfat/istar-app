@@ -65,18 +65,8 @@ public class MainActivity extends BridgeActivity {
                 @Override
                 public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
                     super.onPageStarted(view, url, favicon);
-                    restoreCookiesNow(view);
-                }
-
-                @Override
-                public void onPageFinished(WebView view, String url) {
-                    super.onPageFinished(view, url);
+                    injectLSToken(view, url);
                     injectFcmToken(view);
-                }
-
-                @Override
-                public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                    return false;
                 }
 
                 @Override
@@ -137,17 +127,14 @@ public class MainActivity extends BridgeActivity {
         return super.dispatchTouchEvent(ev);
     }
 
-    private void restoreCookiesNow(WebView view) {
+    private void injectLSToken(WebView view, String url) {
         String js = "(function(){" +
             "var keys=['remember_token','student_remember_token','parent_remember_token'];" +
             "var tok=null;" +
             "keys.forEach(function(k){var v=localStorage.getItem(k);if(v&&!tok)tok=v;});" +
-            "if(tok){var u=location.pathname+(location.search?'&':'?')+'ls_token='+tok;" +
-            "history.replaceState(null,'',u);}window.__lsToken=tok;" +
-            "var d=document.createElement('div');" +
-            "d.id='_dbg';d.style='position:fixed;top:0;left:0;right:0;z-index:99999999;background:#00aa00;color:#fff;padding:12px;font-size:14px;font-weight:bold';" +
-            "d.innerHTML='R:'+(tok?(tok.substring(0,8)+'...'+tok):'NONE');" +
-            "document.body.appendChild(d);" +
+            "if(tok&&!location.search.includes('ls_token=')){" +
+            "var newUrl=location.pathname+location.search+(location.search?'&':'?')+'ls_token='+tok;" +
+            "window.location.replace(newUrl);return;}" +
             "})();";
         view.evaluateJavascript(js, null);
     }
