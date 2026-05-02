@@ -153,6 +153,59 @@ public class MainActivity extends BridgeActivity {
                 showBatteryOptimizationDialog();
             }
         }
+        detectAndPromptAutoStart();
+    }
+
+    private String getDeviceBrand() {
+        String manufacturer = Build.MANUFACTURER.toLowerCase();
+        String brand = Build.BRAND.toLowerCase();
+        if (brand.contains("xiaomi") || brand.contains("redmi") || manufacturer.contains("xiaomi")) return "xiaomi";
+        if (brand.contains("huawei") || brand.contains("honor") || manufacturer.contains("huawei")) return "huawei";
+        if (brand.contains("oppo") || brand.contains("realme") || manufacturer.contains("oppo")) return "oppo";
+        if (brand.contains("vivo") || manufacturer.contains("vivo")) return "vivo";
+        if (brand.contains("samsung") || manufacturer.contains("samsung")) return "samsung";
+        if (brand.contains("oneplus") || manufacturer.contains("oneplus")) return "oneplus";
+        if (brand.contains("sony") || manufacturer.contains("sony")) return "sony";
+        if (brand.contains("asus") || manufacturer.contains("asus")) return "asus";
+        if (brand.contains("google") || manufacturer.contains("google")) return "google";
+        return "generic";
+    }
+
+    private void detectAndPromptAutoStart() {
+        String brand = getDeviceBrand();
+        if (brand.equals("google")) return; // Pixel 唔需要
+        showAutoStartDialog(brand);
+    }
+
+    private void showAutoStartDialog(String brand) {
+        String title = "開啟自啟動權限";
+        String message = "";
+        if (brand.equals("xiaomi")) {
+            message = "為確保推送通知正常，請開啟自啟動權限：\n\n1. 進入【設定】>【應用設置】\n2. 找到【星進教育 i-STAR】\n3. 點擊【自啟動】，開啟開關\n4. 返回 App";
+        } else if (brand.equals("huawei") || brand.equals("honor")) {
+            message = "為確保推送通知正常，請開啟自啟動權限：\n\n1. 進入【設定】>【電池】>【啟動管理】\n2. 找到【星進教育 i-STAR】\n3. 設為【允許自動運行】\n4. 返回 App";
+        } else if (brand.equals("oppo") || brand.equals("realme")) {
+            message = "為確保推送通知正常，請開啟自啟動權限：\n\n1. 進入【設定】>【電池】\n2. 點擊【耗電優化】\n3. 找到【星進教育 i-STAR】，設為【允許後台】\n4. 返回 App";
+        } else if (brand.equals("vivo")) {
+            message = "為確保推送通知正常，請開啟自啟動權限：\n\n1. 進入【設定】>【電池】>【高耗電提醒】\n2. 找到【星進教育 i-STAR】\n3. 開啟【允許後台運行】\n4. 返回 App";
+        } else if (brand.equals("samsung")) {
+            message = "為確保推送通知正常，請開啟自啟動權限：\n\n1. 進入【設定】>【電池】>【後台應用程式】\n2. 找到【星進教育 i-STAR】\n3. 設為【永不關閉】\n4. 返回 App";
+        } else if (brand.equals("oneplus")) {
+            message = "為確保推送通知正常，請開啟自啟動權限：\n\n1. 進入【設定】>【電池】>【電池優化】\n2. 找到【星進教育 i-STAR】\n3. 設為【不優化】\n4. 返回 App";
+        } else if (brand.equals("sony")) {
+            message = "為確保推送通知正常，請開啟自啟動權限：\n\n1. 進入【設定】>【電池】>【後台應用程式】\n2. 找到【星進教育 i-STAR】\n3. 開啟【允許後台運行】\n4. 返回 App";
+        } else if (brand.equals("asus")) {
+            message = "為確保推送通知正常，請開啟自啟動權限：\n\n1. 進入【設定】>【電池管理】>【後台應用程式】\n2. 找到【星進教育 i-STAR】\n3. 開啟允許\n4. 返回 App";
+        } else {
+            message = "為確保推送通知正常，請允許 App 在後台運行：\n\n1. 進入【設定】>【應用】\n2. 找到【星進教育 i-STAR】\n3. 設為【允許後台活動】或【不自優化】\n4. 返回 App";
+        }
+
+        new AlertDialog.Builder(this)
+            .setTitle(title)
+            .setMessage(message)
+            .setPositiveButton("知道了", null)
+            .setCancelable(true)
+            .show();
     }
 
     private void showBatteryOptimizationDialog() {
