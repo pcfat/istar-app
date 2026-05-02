@@ -63,6 +63,12 @@ public class MainActivity extends BridgeActivity {
 
             webView.setWebViewClient(new WebViewClient() {
                 @Override
+                public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
+                    super.onPageStarted(view, url, favicon);
+                    restoreCookiesNow(view);
+                }
+
+                @Override
                 public void onPageFinished(WebView view, String url) {
                     super.onPageFinished(view, url);
                     injectFcmToken(view);
@@ -70,7 +76,6 @@ public class MainActivity extends BridgeActivity {
 
                 @Override
                 public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                    restoreCookiesNow(view);
                     return false;
                 }
 
