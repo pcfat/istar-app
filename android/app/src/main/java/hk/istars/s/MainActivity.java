@@ -174,6 +174,8 @@ public class MainActivity extends BridgeActivity {
 
     private static final String PREFS_NAME = "istar_prefs";
     private static final String KEY_AUTO_START_SHOWN = "auto_start_dialog_shown";
+    private static final String KEY_BATTERY_DIALOG_DISMISSED = "battery_dialog_dismissed";
+    private static final String KEY_BATTERY_DIALOG_NEVER = "battery_dialog_never";
 
     private void detectAndPromptAutoStart() {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
@@ -181,7 +183,6 @@ public class MainActivity extends BridgeActivity {
         String brand = getDeviceBrand();
         if (brand.equals("google")) return; // Pixel 唔需要
         showAutoStartDialog(brand);
-        prefs.edit().putBoolean(KEY_AUTO_START_SHOWN, true).apply();
     }
 
     private void showAutoStartDialog(String brand) {
@@ -210,24 +211,42 @@ public class MainActivity extends BridgeActivity {
         new AlertDialog.Builder(this)
             .setTitle(title)
             .setMessage(message)
-            .setPositiveButton("知道了", null)
+            .setPositiveButton("設定", (dialog, which) -> {
+                prefs.edit().putBoolean(KEY_AUTO_START_SHOWN, true).apply();
+                Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                intent.setData(Uri.parse("package:" + getPackageName()));
+                startActivity(intent);
+            })
+            .setNeutralButton("稍後提醒", (dialog, which) -> {
+                prefs.edit().putBoolean(KEY_AUTO_START_SHOWN, false).apply();
+            })
+            .setNegativeButton("不再提醒", (dialog, which) -> {
+                prefs.edit().putBoolean(KEY_AUTO_START_SHOWN, true).apply();
+            })
             .setCancelable(true)
             .show();
     }
 
     private void showBatteryOptimizationDialog() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        if (prefs.getBoolean(KEY_BATTERY_DIALOG_NEVER, false)) return;
         new AlertDialog.Builder(this)
             .setTitle("需要關閉電池優化")
-            .setMessage("為確保 App 能夠正常接收推送通知，請進行以下設定：\n\n步驟：\n1. 點擊【確定】打開設定\n2. 找到【星進教育 i-STAR】\n3. 設定【無限制】或【不優化】\n4. 返回 App")
-            .setPositiveButton("確定", (dialog, which) -> {
+            .setMessage("為確保 App 能夠正常接收推送通知，請進行以下設定：\n\n步驟：\n1. 點擊【設定】打開設定\n2. 找到【星進教育 i-STAR】\n3. 設定【無限制】或【不優化】\n4. 返回 App")
+            .setPositiveButton("設定", (dialog, which) -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
                     intent.setData(Uri.parse("package:" + getPackageName()));
                     startActivity(intent);
                 }
             })
-            .setNegativeButton("稍後再說", null)
-            .setCancelable(false)
+            .setNeutralButton("稍後提醒", (dialog, which) -> {
+                prefs.edit().putBoolean(KEY_BATTERY_DIALOG_DISMISSED, true).apply();
+            })
+            .setNegativeButton("不再提醒", (dialog, which) -> {
+                prefs.edit().putBoolean(KEY_BATTERY_DIALOG_NEVER, true).apply();
+            })
+            .setCancelable(true)
             .show();
     }
 
