@@ -3,13 +3,16 @@ package hk.istars.s;
 import android.annotation.SuppressLint;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.PowerManager;
+import android.provider.Settings;
 import android.view.MotionEvent;
 import android.webkit.CookieManager;
-import android.webkit.CookieSyncManager;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
@@ -17,6 +20,7 @@ import android.webkit.WebViewClient;
 import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import com.getcapacitor.BridgeActivity;
 import com.google.firebase.messaging.FirebaseMessaging;
@@ -60,6 +64,8 @@ public class MainActivity extends BridgeActivity {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 cookieManager.flush();
             }
+
+            checkBatteryOptimization();
 
             webView.setWebViewClient(new WebViewClient() {
                 @Override
@@ -138,6 +144,31 @@ public class MainActivity extends BridgeActivity {
             "window.location.replace(newUrl);return;}" +
             "})();";
         view.evaluateJavascript(js, null);
+    }
+
+    private void checkBatteryOptimization() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
+            if (pm != null && !pm.isIgnoringBatteryOptimizations(getPackageName())) {
+                showBatteryOptimizationDialog();
+            }
+        }
+    }
+
+    private void showBatteryOptimizationDialog() {
+        new AlertDialog.Builder(this)
+            .setTitle("需要關閉電池優化")
+            .setMessage("為確保 App 能夠正常接收推送通知，請允許後台活動。\n\n步驟：\n1. 點擊【確定】打開設定\n2. 找到【星進教育 i-STAR】\n3. 設定【無限制】或【不優化】\n4. 返回 App")
+            .setPositiveButton("確定", (dialog, which) -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                    intent.setData(Uri.parse("package:" + getPackageName()));
+                    startActivity(intent);
+                }
+            })
+            .setNegativeButton("稍後再說", null)
+            .setCancelable(false)
+            .show();
     }
 
     private void injectFcmToken(WebView view) {
