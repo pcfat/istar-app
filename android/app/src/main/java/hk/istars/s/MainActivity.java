@@ -209,6 +209,7 @@ public class MainActivity extends BridgeActivity {
             message = "為確保推送通知正常運作，請允許 App 在後台運行：\n\n1. 進入【設定】>【應用】\n2. 找到【星進教育 i-STAR】\n3. 設為【允許後台活動】或【不自優化】\n4. 返回 App";
         }
 
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         new AlertDialog.Builder(this)
             .setTitle(title)
             .setMessage(message)
