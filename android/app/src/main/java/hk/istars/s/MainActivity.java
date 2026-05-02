@@ -127,11 +127,6 @@ public class MainActivity extends BridgeActivity {
         return super.dispatchTouchEvent(ev);
     }
 
-    private void checkCookies(WebView view) {
-        String js = "(function(){var c=document.cookie;var d=document.createElement('div');d.id='_dbg';d.style='position:fixed;top:0;left:0;right:0;z-index:99999999;background:#ff6600;color:#000;padding:12px;font-size:14px;word-break:break-all;font-weight:bold;height:60px;overflow:auto';d.innerHTML='<div style=font-weight:bold;margin-bottom:4px;>COOKIES</div><div>'+c.substring(0,300)+'</div>';document.body.appendChild(d);window._dbgEl=d;})();";
-        view.evaluateJavascript(js, null);
-    }
-
     private void injectFcmToken(WebView view) {
         FirebaseMessaging.getInstance().getToken()
             .addOnCompleteListener(task -> {
