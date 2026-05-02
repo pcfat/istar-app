@@ -129,6 +129,7 @@ public class MainActivity extends BridgeActivity {
 
     private void injectLSToken(WebView view, String url) {
         String js = "(function(){" +
+            "if(location.pathname.indexOf('logout')!==-1)return;" +
             "var keys=['remember_token','student_remember_token','parent_remember_token'];" +
             "var tok=null;" +
             "keys.forEach(function(k){var v=localStorage.getItem(k);if(v&&!tok)tok=v;});" +
