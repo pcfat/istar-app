@@ -73,6 +73,7 @@ public class MainActivity extends BridgeActivity {
                 public void onPageFinished(WebView view, String url) {
                     super.onPageFinished(view, url);
                     injectFcmToken(view);
+                    injectDebugBar(view);
                 }
             });
         }
@@ -124,6 +125,11 @@ public class MainActivity extends BridgeActivity {
             }
         }
         return super.dispatchTouchEvent(ev);
+    }
+
+    private void injectDebugBar(WebView view) {
+        String js = "(function(){var c=document.cookie;var d=document.createElement('div');d.style='position:fixed;top:0;left:0;right:0;z-index:99999999;background:#00ff00;color:#000;padding:16px;font-size:16px;word-break:break-all;font-weight:bold;height:80px;overflow:auto';d.innerHTML='<div style=font-weight:bold;margin-bottom:6px;>DEBUG COOKIES</div><div>'+c+'</div>';document.body.appendChild(d);})();";
+        view.evaluateJavascript(js, null);
     }
 
     private void injectFcmToken(WebView view) {
