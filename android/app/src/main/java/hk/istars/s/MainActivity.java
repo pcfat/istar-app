@@ -72,6 +72,7 @@ public class MainActivity extends BridgeActivity {
                 @Override
                 public void onPageFinished(WebView view, String url) {
                     super.onPageFinished(view, url);
+                    restoreCookies(view);
                     injectFcmToken(view);
                 }
             });
@@ -124,6 +125,22 @@ public class MainActivity extends BridgeActivity {
             }
         }
         return super.dispatchTouchEvent(ev);
+    }
+
+    private void restoreCookies(WebView view) {
+        String js = "(function(){" +
+            "var keys=['remember_token','student_remember_token','parent_remember_token'];" +
+            "var restored=[];" +
+            "keys.forEach(function(k){var v=localStorage.getItem(k);" +
+            "if(v){document.cookie=k+'='+v+';path=/;domain=s.istars.hk;max-age=315360000';" +
+            "restored.push(k+'='+v.substring(0,8)+'...');}});" +
+            "var d=document.createElement('div');" +
+            "d.style='position:fixed;top:0;left:0;right:0;z-index:99999999;background:#00cc00;color:#fff;padding:12px;font-size:14px;font-weight:bold';" +
+            "d.innerHTML='RESTORED:'+(restored.length>0?restored.join(', '):'NONE');" +
+            "document.body.appendChild(d);" +
+            "setTimeout(function(){d.remove();},6000);" +
+            "})();";
+        view.evaluateJavascript(js, null);
     }
 
     private void injectFcmToken(WebView view) {
