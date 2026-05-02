@@ -211,7 +211,7 @@ public class MainActivity extends BridgeActivity {
     private void showBatteryOptimizationDialog() {
         new AlertDialog.Builder(this)
             .setTitle("需要關閉電池優化")
-            .setMessage("為確保 App 能夠正常接收推送通知，請允許後台活動。\n\n步驟：\n1. 點擊【確定】打開設定\n2. 找到【星進教育 i-STAR】\n3. 設定【無限制】或【不優化】\n4. 返回 App")
+            .setMessage("為確保 App 能夠正常接收推送通知，請進行以下設定：\n\n步驟：\n1. 點擊【確定】打開設定\n2. 找到【星進教育 i-STAR】\n3. 設定【無限制】或【不優化】\n4. 返回 App")
             .setPositiveButton("確定", (dialog, which) -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
