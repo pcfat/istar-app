@@ -3,7 +3,8 @@ package hk.istars.s;
 import android.annotation.SuppressLint;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.content.Intent;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
@@ -171,10 +172,16 @@ public class MainActivity extends BridgeActivity {
         return "generic";
     }
 
+    private static final String PREFS_NAME = "istar_prefs";
+    private static final String KEY_AUTO_START_SHOWN = "auto_start_dialog_shown";
+
     private void detectAndPromptAutoStart() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        if (prefs.getBoolean(KEY_AUTO_START_SHOWN, false)) return;
         String brand = getDeviceBrand();
         if (brand.equals("google")) return; // Pixel 唔需要
         showAutoStartDialog(brand);
+        prefs.edit().putBoolean(KEY_AUTO_START_SHOWN, true).apply();
     }
 
     private void showAutoStartDialog(String brand) {
