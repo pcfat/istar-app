@@ -34,8 +34,20 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug
 
+      - name: Build Release AAB
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: istar-debug.apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Upload AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: istar-release.aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
