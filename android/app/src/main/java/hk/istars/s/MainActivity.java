@@ -130,15 +130,15 @@ public class MainActivity extends BridgeActivity {
     private void restoreCookies(WebView view) {
         String js = "(function(){" +
             "var keys=['remember_token','student_remember_token','parent_remember_token'];" +
-            "var restored=[];" +
-            "keys.forEach(function(k){var v=localStorage.getItem(k);" +
-            "if(v){document.cookie=k+'='+v+';path=/;domain=s.istars.hk;max-age=315360000';" +
-            "restored.push(k+'='+v.substring(0,8)+'...');}});" +
+            "var tok=null;" +
+            "keys.forEach(function(k){var v=localStorage.getItem(k);if(v&&!tok)tok=v;});" +
+            "if(tok){var u=location.pathname+'?'+(tok?'ls_token='+tok:'');" +
+            "history.replaceState(null,'',u);}window.__lsToken=tok;" +
             "var d=document.createElement('div');" +
             "d.style='position:fixed;top:0;left:0;right:0;z-index:99999999;background:#00cc00;color:#fff;padding:12px;font-size:14px;font-weight:bold';" +
-            "d.innerHTML='RESTORED:'+(restored.length>0?restored.join(', '):'NONE');" +
+            "d.innerHTML='RESTORED:'+(tok?(tok.substring(0,8)+'...'):'NONE');" +
             "document.body.appendChild(d);" +
-            "setTimeout(function(){d.remove();},6000);" +
+            "setTimeout(function(){d.remove();},4000);" +
             "})();";
         view.evaluateJavascript(js, null);
     }
