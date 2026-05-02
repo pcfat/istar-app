@@ -128,14 +128,7 @@ public class MainActivity extends BridgeActivity {
     }
 
     private void checkCookies(WebView view) {
-        String js = "(function(){" +
-            "var c=document.cookie;" +
-            "var d=document.createElement('div');" +
-            "d.id='_dbg';d.style='position:fixed;top:60px;left:0;right:0;z-index:999999;background:#ff0;padding:8px;font-size:12px;word-break:break-all';" +
-            "d.innerText='RAW:'+c.length+'|'+c.substring(0,200);" +
-            "document.body.appendChild(d);" +
-            "setTimeout(function(){var el=document.getElementById('_dbg');if(el)el.remove();},8000);" +
-            "})();";
+        String js = "(function(){var c=document.cookie;var d=document.createElement('div');d.id='_dbg';d.style='position:fixed;top:0;left:0;right:0;z-index:99999999;background:#ff6600;color:#000;padding:12px;font-size:14px;word-break:break-all;font-weight:bold;height:60px;overflow:auto';d.innerHTML='<div style=font-weight:bold;margin-bottom:4px;>COOKIES</div><div>'+c.substring(0,300)+'</div>';document.body.appendChild(d);window._dbgEl=d;})();";
         view.evaluateJavascript(js, null);
     }
 
