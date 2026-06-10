@@ -13,7 +13,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.provider.Settings;
-import android.view.MotionEvent;
 import android.webkit.CookieManager;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
@@ -24,6 +23,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.getcapacitor.BridgeActivity;
 import com.google.firebase.messaging.FirebaseMessaging;
 
@@ -31,9 +31,7 @@ public class MainActivity extends BridgeActivity {
 
     private ActivityResultLauncher<String> notificationPermissionLauncher;
     private WebView webView;
-    private float touchStartY = 0;
-    private long lastPullTime = 0;
-    private boolean isPulling = false;
+    private SwipeRefreshLayout swipeRefreshLayout;
 
     @Override
     @SuppressLint("SetJavaScriptEnabled")
@@ -46,6 +44,22 @@ public class MainActivity extends BridgeActivity {
         );
 
         createNotificationChannel();
+
+        // Setup SwipeRefreshLayout
+        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
+        if (swipeRefreshLayout != null) {
+            swipeRefreshLayout.setDistanceToTriggerSync(200);  // 增加觸發距離
+            swipeRefreshLayout.setColorSchemeColors(0xFF1AABE0);  // 品牌色
+            swipeRefreshLayout.setProgressBackgroundColorSchemeColor(0xFFFFFFFF);
+            swipeRefreshLayout.setOnRefreshListener(() -> {
+                if (webView != null) {
+                    webView.reload();
+                }
+                swipeRefreshLayout.postDelayed(() -> {
+                    swipeRefreshLayout.setRefreshing(false);
+                }, 1000);  // 延長動畫時間
+            });
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS)
@@ -108,31 +122,6 @@ public class MainActivity extends BridgeActivity {
                 };
                 h.postDelayed(inject, 5000);
             });
-    }
-
-    @Override
-    public boolean dispatchTouchEvent(MotionEvent ev) {
-        int action = ev.getAction();
-        float y = ev.getY();
-
-        if (action == MotionEvent.ACTION_DOWN) {
-            touchStartY = y;
-            isPulling = false;
-        } else if (action == MotionEvent.ACTION_MOVE) {
-            float deltaY = y - touchStartY;
-            if (deltaY > 150) {
-                long now = System.currentTimeMillis();
-                if (now - lastPullTime > 2000) {
-                    isPulling = true;
-                    lastPullTime = now;
-                    Toast.makeText(this, "正在重新加載頁面...", Toast.LENGTH_SHORT).show();
-                    if (webView != null) {
-                        webView.reload();
-                    }
-                }
-            }
-        }
-        return super.dispatchTouchEvent(ev);
     }
 
     private void injectLSToken(WebView view, String url) {
