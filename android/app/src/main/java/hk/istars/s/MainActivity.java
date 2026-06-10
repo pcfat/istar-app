@@ -82,7 +82,7 @@ public class MainActivity extends BridgeActivity {
                 pullRefreshContainer = new FrameLayout(this);
                 FrameLayout.LayoutParams containerParams = new FrameLayout.LayoutParams(140, 140);
                 containerParams.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
-                containerParams.topMargin = 50;
+                containerParams.topMargin = 100;
                 pullRefreshContainer.setLayoutParams(containerParams);
                 pullRefreshContainer.setAlpha(0f);
                 
