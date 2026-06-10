@@ -76,18 +76,37 @@ public class MainActivity extends BridgeActivity {
             // Create pull-to-refresh indicator
             webView.post(() -> {
                 ViewGroup rootView = (ViewGroup) webView.getRootView();
+                
+                // Create container with background
+                FrameLayout container = new FrameLayout(this);
+                FrameLayout.LayoutParams containerParams = new FrameLayout.LayoutParams(140, 140);
+                containerParams.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
+                containerParams.topMargin = 50;
+                container.setLayoutParams(containerParams);
+                container.setAlpha(0f);
+                
+                // Set white circular background
+                android.graphics.drawable.GradientDrawable background = new android.graphics.drawable.GradientDrawable();
+                background.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+                background.setColor(0xFFFFFFFF);
+                background.setStroke(1, 0xFFE0E0E0);
+                container.setBackground(background);
+                container.setElevation(8);
+                
+                // Create progress indicator
                 pullRefreshIndicator = new ProgressBar(this);
                 pullRefreshIndicator.setIndeterminate(true);
                 pullRefreshIndicator.getIndeterminateDrawable().setColorFilter(0xFF1AABE0, android.graphics.PorterDuff.Mode.SRC_IN);
-                FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(120, 120);
-                params.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
-                params.topMargin = 60;
-                pullRefreshIndicator.setLayoutParams(params);
-                pullRefreshIndicator.setAlpha(0f);
-                pullRefreshIndicator.setScaleX(0.7f);
-                pullRefreshIndicator.setScaleY(0.7f);
+                FrameLayout.LayoutParams progressParams = new FrameLayout.LayoutParams(100, 100);
+                progressParams.gravity = Gravity.CENTER;
+                pullRefreshIndicator.setLayoutParams(progressParams);
+                
+                container.addView(pullRefreshIndicator);
+                
                 if (rootView instanceof FrameLayout) {
-                    ((FrameLayout) rootView).addView(pullRefreshIndicator);
+                    ((FrameLayout) rootView).addView(container);
+                    pullRefreshIndicator = container.findViewById(pullRefreshIndicator.getId());
+                    pullRefreshIndicator.setTag(container);  // Store container reference
                 }
             });
 
@@ -146,12 +165,16 @@ public class MainActivity extends BridgeActivity {
             float deltaY = y - touchStartY;
             int scrollY = webView.getScrollY();
             
-            // 只有喺頂部先可以觸發
             if (scrollY <= 0 && deltaY > 0) {
                 float progress = Math.min(deltaY / PULL_THRESHOLD, 1.0f);
                 if (pullRefreshIndicator != null) {
-                    pullRefreshIndicator.setAlpha(progress * 0.8f);
-                    pullRefreshIndicator.setTranslationY(deltaY * 0.3f);
+                    android.view.View container = (android.view.View) pullRefreshIndicator.getTag();
+                    if (container != null) {
+                        container.setAlpha(progress * 0.9f);
+                        container.setTranslationY(deltaY * 0.4f);
+                        container.setScaleX(0.7f + progress * 0.3f);
+                        container.setScaleY(0.7f + progress * 0.3f);
+                    }
                 }
                 
                 if (deltaY > PULL_THRESHOLD && !isPulling) {
@@ -160,25 +183,38 @@ public class MainActivity extends BridgeActivity {
             }
         } else if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
             if (isPulling && webView != null && webView.getScrollY() <= 0) {
-                // 觸發 refresh
                 if (pullRefreshIndicator != null) {
-                    pullRefreshIndicator.setAlpha(1.0f);
-                    pullRefreshIndicator.setTranslationY(60);
+                    android.view.View container = (android.view.View) pullRefreshIndicator.getTag();
+                    if (container != null) {
+                        // Smooth transition to final position
+                        ObjectAnimator.ofFloat(container, "translationY", container.getTranslationY(), 50f).setDuration(200).start();
+                        ObjectAnimator.ofFloat(container, "scaleX", container.getScaleX(), 1.0f).setDuration(200).start();
+                        ObjectAnimator.ofFloat(container, "scaleY", container.getScaleY(), 1.0f).setDuration(200).start();
+                        container.setAlpha(1.0f);
+                    }
                 }
                 webView.reload();
                 
-                // 延遲隱藏動畫
                 webView.postDelayed(() -> {
                     if (pullRefreshIndicator != null) {
-                        ObjectAnimator.ofFloat(pullRefreshIndicator, "alpha", 1.0f, 0f).setDuration(300).start();
-                        ObjectAnimator.ofFloat(pullRefreshIndicator, "translationY", pullRefreshIndicator.getTranslationY(), 0f).setDuration(300).start();
+                        android.view.View container = (android.view.View) pullRefreshIndicator.getTag();
+                        if (container != null) {
+                            ObjectAnimator.ofFloat(container, "alpha", 1.0f, 0f).setDuration(300).start();
+                            ObjectAnimator alphaAnim = ObjectAnimator.ofFloat(container, "translationY", container.getTranslationY(), 0f);
+                            alphaAnim.setDuration(300);
+                            alphaAnim.start();
+                        }
                     }
                 }, 1200);
             } else {
-                // 取消動畫
                 if (pullRefreshIndicator != null) {
-                    ObjectAnimator.ofFloat(pullRefreshIndicator, "alpha", pullRefreshIndicator.getAlpha(), 0f).setDuration(200).start();
-                    ObjectAnimator.ofFloat(pullRefreshIndicator, "translationY", pullRefreshIndicator.getTranslationY(), 0f).setDuration(200).start();
+                    android.view.View container = (android.view.View) pullRefreshIndicator.getTag();
+                    if (container != null) {
+                        ObjectAnimator.ofFloat(container, "alpha", container.getAlpha(), 0f).setDuration(200).start();
+                        ObjectAnimator.ofFloat(container, "translationY", container.getTranslationY(), 0f).setDuration(200).start();
+                        ObjectAnimator.ofFloat(container, "scaleX", container.getScaleX(), 0.7f).setDuration(200).start();
+                        ObjectAnimator.ofFloat(container, "scaleY", container.getScaleY(), 0.7f).setDuration(200).start();
+                    }
                 }
             }
             isPulling = false;
