@@ -24,6 +24,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.getcapacitor.BridgeActivity;
 import com.google.firebase.messaging.FirebaseMessaging;
 
@@ -31,8 +32,7 @@ public class MainActivity extends BridgeActivity {
 
     private ActivityResultLauncher<String> notificationPermissionLauncher;
     private WebView webView;
-    private float touchStartY = 0;
-    private long lastPullTime = 0;
+    private SwipeRefreshLayout swipeRefreshLayout;
 
     @Override
     @SuppressLint("SetJavaScriptEnabled")
@@ -65,6 +65,30 @@ public class MainActivity extends BridgeActivity {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 cookieManager.flush();
             }
+
+            // Setup SwipeRefreshLayout
+            webView.post(() -> {
+                android.view.ViewParent parent = webView.getParent();
+                if (parent instanceof SwipeRefreshLayout) {
+                    swipeRefreshLayout = (SwipeRefreshLayout) parent;
+                    swipeRefreshLayout.setDistanceToTriggerSync(300);  // 增加觸發距離
+                    swipeRefreshLayout.setColorSchemeColors(0xFF1AABE0);  // 品牌色
+                    swipeRefreshLayout.setProgressBackgroundColorSchemeColor(0xFFFFFFFF);
+                    swipeRefreshLayout.setOnRefreshListener(() -> {
+                        webView.reload();
+                        swipeRefreshLayout.postDelayed(() -> {
+                            swipeRefreshLayout.setRefreshing(false);
+                        }, 1200);
+                    });
+                    // 只有喺頂部先可以 refresh
+                    swipeRefreshLayout.setOnChildScrollUpCallback((parent1, child) -> {
+                        if (child instanceof WebView) {
+                            return ((WebView) child).getScrollY() > 0;
+                        }
+                        return false;
+                    });
+                }
+            });
 
             checkBatteryOptimization();
 
@@ -107,29 +131,6 @@ public class MainActivity extends BridgeActivity {
                 };
                 h.postDelayed(inject, 5000);
             });
-    }
-
-    @Override
-    public boolean dispatchTouchEvent(MotionEvent ev) {
-        int action = ev.getAction();
-        float y = ev.getY();
-
-        if (action == MotionEvent.ACTION_DOWN) {
-            touchStartY = y;
-        } else if (action == MotionEvent.ACTION_MOVE) {
-            float deltaY = y - touchStartY;
-            if (deltaY > 250) {  // 增加觸發距離 150 → 250
-                long now = System.currentTimeMillis();
-                if (now - lastPullTime > 3000) {  // 增加 throttle 2s → 3s
-                    lastPullTime = now;
-                    Toast.makeText(this, "🔄 重新載入中...", Toast.LENGTH_SHORT).show();
-                    if (webView != null) {
-                        webView.reload();
-                    }
-                }
-            }
-        }
-        return super.dispatchTouchEvent(ev);
     }
 
     private void injectLSToken(WebView view, String url) {
