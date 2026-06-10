@@ -45,22 +45,6 @@ public class MainActivity extends BridgeActivity {
 
         createNotificationChannel();
 
-        // Setup SwipeRefreshLayout
-        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
-        if (swipeRefreshLayout != null) {
-            swipeRefreshLayout.setDistanceToTriggerSync(200);  // 增加觸發距離
-            swipeRefreshLayout.setColorSchemeColors(0xFF1AABE0);  // 品牌色
-            swipeRefreshLayout.setProgressBackgroundColorSchemeColor(0xFFFFFFFF);
-            swipeRefreshLayout.setOnRefreshListener(() -> {
-                if (webView != null) {
-                    webView.reload();
-                }
-                swipeRefreshLayout.postDelayed(() -> {
-                    swipeRefreshLayout.setRefreshing(false);
-                }, 1000);  // 延長動畫時間
-            });
-        }
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS)
                     != PackageManager.PERMISSION_GRANTED) {
@@ -80,6 +64,23 @@ public class MainActivity extends BridgeActivity {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 cookieManager.flush();
             }
+
+            // Setup SwipeRefreshLayout after WebView is ready
+            webView.post(() -> {
+                android.view.ViewParent parent = webView.getParent();
+                if (parent instanceof SwipeRefreshLayout) {
+                    swipeRefreshLayout = (SwipeRefreshLayout) parent;
+                    swipeRefreshLayout.setDistanceToTriggerSync(200);
+                    swipeRefreshLayout.setColorSchemeColors(0xFF1AABE0);
+                    swipeRefreshLayout.setProgressBackgroundColorSchemeColor(0xFFFFFFFF);
+                    swipeRefreshLayout.setOnRefreshListener(() -> {
+                        webView.reload();
+                        swipeRefreshLayout.postDelayed(() -> {
+                            swipeRefreshLayout.setRefreshing(false);
+                        }, 1000);
+                    });
+                }
+            });
 
             checkBatteryOptimization();
 
