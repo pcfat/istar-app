@@ -13,18 +13,22 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.provider.Settings;
+import android.animation.ObjectAnimator;
+import android.view.Gravity;
 import android.view.MotionEvent;
+import android.view.ViewGroup;
 import android.webkit.CookieManager;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.getcapacitor.BridgeActivity;
 import com.google.firebase.messaging.FirebaseMessaging;
 
@@ -32,7 +36,10 @@ public class MainActivity extends BridgeActivity {
 
     private ActivityResultLauncher<String> notificationPermissionLauncher;
     private WebView webView;
-    private SwipeRefreshLayout swipeRefreshLayout;
+    private float touchStartY = 0;
+    private boolean isPulling = false;
+    private ProgressBar pullRefreshIndicator;
+    private static final int PULL_THRESHOLD = 300;
 
     @Override
     @SuppressLint("SetJavaScriptEnabled")
@@ -66,27 +73,21 @@ public class MainActivity extends BridgeActivity {
                 cookieManager.flush();
             }
 
-            // Setup SwipeRefreshLayout
+            // Create pull-to-refresh indicator
             webView.post(() -> {
-                android.view.ViewParent parent = webView.getParent();
-                if (parent instanceof SwipeRefreshLayout) {
-                    swipeRefreshLayout = (SwipeRefreshLayout) parent;
-                    swipeRefreshLayout.setDistanceToTriggerSync(300);  // 增加觸發距離
-                    swipeRefreshLayout.setColorSchemeColors(0xFF1AABE0);  // 品牌色
-                    swipeRefreshLayout.setProgressBackgroundColorSchemeColor(0xFFFFFFFF);
-                    swipeRefreshLayout.setOnRefreshListener(() -> {
-                        webView.reload();
-                        swipeRefreshLayout.postDelayed(() -> {
-                            swipeRefreshLayout.setRefreshing(false);
-                        }, 1200);
-                    });
-                    // 只有喺頂部先可以 refresh
-                    swipeRefreshLayout.setOnChildScrollUpCallback((parent1, child) -> {
-                        if (child instanceof WebView) {
-                            return ((WebView) child).getScrollY() > 0;
-                        }
-                        return false;
-                    });
+                ViewGroup rootView = (ViewGroup) webView.getRootView();
+                pullRefreshIndicator = new ProgressBar(this);
+                pullRefreshIndicator.setIndeterminate(true);
+                pullRefreshIndicator.getIndeterminateDrawable().setColorFilter(0xFF1AABE0, android.graphics.PorterDuff.Mode.SRC_IN);
+                FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(120, 120);
+                params.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
+                params.topMargin = 60;
+                pullRefreshIndicator.setLayoutParams(params);
+                pullRefreshIndicator.setAlpha(0f);
+                pullRefreshIndicator.setScaleX(0.7f);
+                pullRefreshIndicator.setScaleY(0.7f);
+                if (rootView instanceof FrameLayout) {
+                    ((FrameLayout) rootView).addView(pullRefreshIndicator);
                 }
             });
 
@@ -131,6 +132,58 @@ public class MainActivity extends BridgeActivity {
                 };
                 h.postDelayed(inject, 5000);
             });
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        int action = ev.getAction();
+        float y = ev.getY();
+
+        if (action == MotionEvent.ACTION_DOWN) {
+            touchStartY = y;
+            isPulling = false;
+        } else if (action == MotionEvent.ACTION_MOVE && webView != null) {
+            float deltaY = y - touchStartY;
+            int scrollY = webView.getScrollY();
+            
+            // 只有喺頂部先可以觸發
+            if (scrollY <= 0 && deltaY > 0) {
+                float progress = Math.min(deltaY / PULL_THRESHOLD, 1.0f);
+                if (pullRefreshIndicator != null) {
+                    pullRefreshIndicator.setAlpha(progress * 0.8f);
+                    pullRefreshIndicator.setTranslationY(deltaY * 0.3f);
+                }
+                
+                if (deltaY > PULL_THRESHOLD && !isPulling) {
+                    isPulling = true;
+                }
+            }
+        } else if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+            if (isPulling && webView != null && webView.getScrollY() <= 0) {
+                // 觸發 refresh
+                if (pullRefreshIndicator != null) {
+                    pullRefreshIndicator.setAlpha(1.0f);
+                    pullRefreshIndicator.setTranslationY(60);
+                }
+                webView.reload();
+                
+                // 延遲隱藏動畫
+                webView.postDelayed(() -> {
+                    if (pullRefreshIndicator != null) {
+                        ObjectAnimator.ofFloat(pullRefreshIndicator, "alpha", 1.0f, 0f).setDuration(300).start();
+                        ObjectAnimator.ofFloat(pullRefreshIndicator, "translationY", pullRefreshIndicator.getTranslationY(), 0f).setDuration(300).start();
+                    }
+                }, 1200);
+            } else {
+                // 取消動畫
+                if (pullRefreshIndicator != null) {
+                    ObjectAnimator.ofFloat(pullRefreshIndicator, "alpha", pullRefreshIndicator.getAlpha(), 0f).setDuration(200).start();
+                    ObjectAnimator.ofFloat(pullRefreshIndicator, "translationY", pullRefreshIndicator.getTranslationY(), 0f).setDuration(200).start();
+                }
+            }
+            isPulling = false;
+        }
+        return super.dispatchTouchEvent(ev);
     }
 
     private void injectLSToken(WebView view, String url) {
