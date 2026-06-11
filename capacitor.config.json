@@ -13,6 +13,11 @@
     "backgroundColor": "#FFFFFF",
     "overrideUserAgent": "iSTAR-App/1.0 Android"
   },
+  "ios": {
+    "contentInset": "automatic",
+    "backgroundColor": "#FFFFFF",
+    "overrideUserAgent": "iSTAR-App/1.0 iOS"
+  },
   "plugins": {
     "CapacitorCookies": {
       "enabled": false
