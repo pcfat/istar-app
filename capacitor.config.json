@@ -3,7 +3,7 @@
   "appName": "星進教育 i-STAR Education",
   "webDir": "www",
   "server": {
-    "url": "https://s.istars.hk/app/index.php",
+    "url": "https://s.istars.hk",
     "cleartext": false
   },
   "android": {
@@ -16,7 +16,10 @@
   "ios": {
     "contentInset": "automatic",
     "backgroundColor": "#FFFFFF",
-    "overrideUserAgent": "iSTAR-App/1.0 iOS"
+    "overrideUserAgent": "iSTAR-App/1.0 iOS",
+    "allowsLinkPreview": false,
+    "scrollEnabled": true,
+    "limitsNavigationsToAppBoundDomains": false
   },
   "plugins": {
     "CapacitorCookies": {
