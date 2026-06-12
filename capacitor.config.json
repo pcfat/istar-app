@@ -22,6 +22,9 @@
     "limitsNavigationsToAppBoundDomains": false
   },
   "plugins": {
+    "NavigationInterceptor": {
+      "enabled": true
+    },
     "CapacitorCookies": {
       "enabled": false
     },
