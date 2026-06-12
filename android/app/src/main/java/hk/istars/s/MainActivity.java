@@ -125,6 +125,20 @@ public class MainActivity extends BridgeActivity {
                         view.loadUrl("file:///android_asset/public/error.html");
                     }
                 }
+
+                @Override
+                public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                    String url = request.getUrl().toString();
+                    // 如果係 same origin (s.istars.hk)，喺 app 入面打開
+                    if (url.startsWith("https://s.istars.hk/") || url.startsWith("http://localhost")) {
+                        view.loadUrl(url);
+                        return true;
+                    }
+                    // 外部 URL：打開瀏覽器
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                    startActivity(intent);
+                    return true;
+                }
             });
         }
 
