@@ -62,10 +62,8 @@ jobs:
             -scheme App \
             -configuration Release \
             -archivePath $PWD/build/App.xcarchive \
+            -allowProvisioningUpdates \
             DEVELOPMENT_TEAM=V7S7U9U663 \
-            CODE_SIGN_STYLE=Manual \
-            CODE_SIGN_IDENTITY="iPhone Distribution" \
-            PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*][config=Release]=d24c682f-9df7-40b9-bf6f-b70271c1b51e \
             archive
             
       - name: Export IPA
