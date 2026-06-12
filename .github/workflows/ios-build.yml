@@ -63,6 +63,9 @@ jobs:
             -configuration Release \
             -archivePath $PWD/build/App.xcarchive \
             -allowProvisioningUpdates \
+            DEVELOPMENT_TEAM=V7S7U9U663 \
+            CODE_SIGN_STYLE=Manual \
+            PROVISIONING_PROFILE_SPECIFIER="iSTAR App Store" \
             archive
             
       - name: Export IPA
