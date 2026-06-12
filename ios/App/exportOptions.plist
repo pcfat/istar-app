@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
     <key>method</key>
-    <string>app-store</string>
+    <string>app-store-connect</string>
     <key>teamID</key>
     <string>V7S7U9U663</string>
     <key>uploadBitcode</key>
@@ -19,7 +19,7 @@
     <key>provisioningProfiles</key>
     <dict>
         <key>hk.istars.s</key>
-        <string>iSTAR App Store</string>
+        <string>d24c682f-9df7-40b9-bf6f-b70271c1b51e</string>
     </dict>
 </dict>
 </plist>
