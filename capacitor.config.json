@@ -2,10 +2,6 @@
   "appId": "hk.istars.s",
   "appName": "星進教育 i-STAR Education",
   "webDir": "www",
-  "server": {
-    "url": "https://s.istars.hk/app/index.php",
-    "cleartext": false
-  },
   "android": {
     "allowMixedContent": false,
     "captureInput": true,
