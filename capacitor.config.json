@@ -19,11 +19,7 @@
     "overrideUserAgent": "iSTAR-App/1.0 iOS",
     "allowsLinkPreview": false,
     "scrollEnabled": true,
-    "limitsNavigationsToAppBoundDomains": true,
-    "allowNavigation": [
-      "*://s.istars.hk/*",
-      "*://istars.hk/*"
-    ]
+    "limitsNavigationsToAppBoundDomains": false
   },
   "plugins": {
     "CapacitorCookies": {
