@@ -68,5 +68,9 @@
 			</dict>
 		</dict>
 	</dict>
+	<key>WKAppBoundDomains</key>
+	<array>
+		<string>istars.hk</string>
+	</array>
 </dict>
 </plist>
