@@ -51,12 +51,12 @@
         <p>載入中...</p>
     </div>
     
-    <script type="module">
-        import { Browser } from '@capacitor/browser';
-        
-        // Open in fullscreen in-app browser
-        window.addEventListener('DOMContentLoaded', async () => {
+    <script src="capacitor.js"></script>
+    <script>
+        // Wait for Capacitor to be ready
+        document.addEventListener('deviceready', async function() {
             try {
+                const { Browser } = Capacitor.Plugins;
                 await Browser.open({
                     url: 'https://s.istars.hk/app/index.php',
                     presentationStyle: 'fullscreen'
@@ -67,6 +67,11 @@
                 window.location.href = 'https://s.istars.hk/app/index.php';
             }
         });
+        
+        // Fallback: if Capacitor doesn't fire deviceready in 2 seconds
+        setTimeout(function() {
+            window.location.href = 'https://s.istars.hk/app/index.php';
+        }, 2000);
     </script>
 </body>
 </html>
