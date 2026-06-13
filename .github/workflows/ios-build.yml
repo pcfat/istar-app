@@ -25,6 +25,14 @@ jobs:
         run: |
           npx cap sync ios
           
+      - name: Restore custom splash screens
+        run: |
+          # Copy custom splash images after cap sync (cap sync overwrites them)
+          cp assets/splash/splash-2732x2732.png ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732.png
+          cp assets/splash/splash-2732x2732.png ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732-1.png
+          cp assets/splash/splash-2732x2732.png ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732-2.png
+          echo "Custom splash screens restored"
+          
       - name: Update bundle version
         run: |
           # Update project.pbxproj
