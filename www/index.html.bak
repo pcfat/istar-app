@@ -61,7 +61,7 @@
         <div class="spinner"></div>
         <p>載入中...</p>
     </div>
-    <iframe id="app-frame" src="https://s.istars.hk/app/index.php" sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals allow-downloads"></iframe>
+    <iframe id="app-frame" src="https://s.istars.hk/app/index.php"></iframe>
     <script>
         const loading = document.getElementById('loading');
         const frame = document.getElementById('app-frame');
