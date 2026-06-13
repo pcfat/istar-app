@@ -25,6 +25,12 @@ jobs:
         run: |
           npx cap sync ios
           
+      - name: Update bundle version
+        run: |
+          sed -i '' 's/CURRENT_PROJECT_VERSION = [0-9]*;/CURRENT_PROJECT_VERSION = 127;/g' ios/App/App.xcodeproj/project.pbxproj
+          echo "Bundle version updated to 127"
+          grep "CURRENT_PROJECT_VERSION" ios/App/App.xcodeproj/project.pbxproj | head -2
+          
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
