@@ -36,12 +36,12 @@ jobs:
       - name: Update bundle version
         run: |
           # Update project.pbxproj
-          sed -i '' 's/CURRENT_PROJECT_VERSION = [0-9]*;/CURRENT_PROJECT_VERSION = 127;/g' ios/App/App.xcodeproj/project.pbxproj
+          sed -i '' 's/CURRENT_PROJECT_VERSION = [0-9]*;/CURRENT_PROJECT_VERSION = 128;/g' ios/App/App.xcodeproj/project.pbxproj
           
           # Update Info.plist
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 127" ios/App/App/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 128" ios/App/App/Info.plist
           
-          echo "Bundle version updated to 127"
+          echo "Bundle version updated to 128"
           grep "CURRENT_PROJECT_VERSION" ios/App/App.xcodeproj/project.pbxproj | head -2
           grep -A 1 "CFBundleVersion" ios/App/App/Info.plist | head -2
           
