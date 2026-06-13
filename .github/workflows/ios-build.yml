@@ -77,6 +77,10 @@ jobs:
           
       - name: Build and Archive
         run: |
+          # Clean derived data and build folder to force Assets recompile
+          rm -rf ~/Library/Developer/Xcode/DerivedData
+          rm -rf ios/App/build
+          
           cd ios/App
           xcodebuild clean archive \
             -project App.xcodeproj \
