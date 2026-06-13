@@ -15,7 +15,7 @@
   },
   "ios": {
     "contentInset": "never",
-    "backgroundColor": "#1AABE0",
+    "backgroundColor": "#FFFFFF",
     "overrideUserAgent": "iSTAR-App/1.0 iOS",
     "allowsLinkPreview": false,
     "scrollEnabled": true,
