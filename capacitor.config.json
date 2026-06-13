@@ -29,14 +29,15 @@
       "enabled": false
     },
     "SplashScreen": {
-      "launchShowDuration": 2000,
-      "backgroundColor": "#1AABE0",
+      "launchShowDuration": 0,
+      "launchAutoHide": true,
+      "backgroundColor": "#FFFFFF",
       "androidSplashResourceName": "splash",
       "showSpinner": false
     },
     "StatusBar": {
-      "style": "LIGHT",
-      "backgroundColor": "#1AABE0"
+      "style": "DARK",
+      "backgroundColor": "#FFFFFF"
     }
   }
 }
