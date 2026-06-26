@@ -7,8 +7,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Register custom navigation interceptor
+        // Override bridge view controller to use custom implementation
         return true
+    }
+    
+    override func buildBridge() -> CAPBridgeViewController? {
+        return CustomViewController()
     }
 
     func applicationWillResignActive(_ application: UIApplication) {
