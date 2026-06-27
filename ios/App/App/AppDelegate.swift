@@ -7,14 +7,17 @@ import FirebaseMessaging
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
+    var fcmToken: String?
+    var retryCount = 0
+    var retryTimer: Timer?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Initialize Firebase (required for FCM)
         FirebaseApp.configure()
         
         // Get FCM token and inject to WebView (similar to Android MainActivity)
-        // Delay injection until Capacitor bridge is ready
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+        // Use retry mechanism to ensure WebView is ready
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
             self.injectFCMToken()
         }
         
@@ -24,29 +27,66 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     private func injectFCMToken() {
         Messaging.messaging().token { token, error in
             if let error = error {
-                print("Error fetching FCM token: \(error)")
+                print("❌ Error fetching FCM token: \(error)")
                 return
             }
             
             guard let token = token else {
-                print("No FCM token available")
+                print("❌ No FCM token available")
                 return
             }
             
-            print("FCM Token: \(String(token.prefix(20)))...")
+            self.fcmToken = token
+            print("✅ FCM Token received: \(String(token.prefix(20)))...")
             
-            // Inject token into Capacitor WebView
-            DispatchQueue.main.async {
-                if let bridge = (UIApplication.shared.delegate as? AppDelegate)?.window?.rootViewController as? CAPBridgeViewController {
-                    let js = "if(window.__registerFCMToken)window.__registerFCMToken('\(token.replacingOccurrences(of: "'", with: "\\'"))');"
-                    bridge.webView?.evaluateJavaScript(js, completionHandler: { result, error in
-                        if let error = error {
-                            print("Error injecting FCM token: \(error)")
-                        } else {
-                            print("FCM token injected successfully")
-                        }
-                    })
+            // Try to inject immediately
+            self.tryInjectToken()
+            
+            // Also setup retry timer
+            self.retryTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] timer in
+                guard let self = self else {
+                    timer.invalidate()
+                    return
                 }
+                
+                if self.retryCount >= 10 {
+                    print("❌ Failed to inject FCM token after 10 retries")
+                    timer.invalidate()
+                    return
+                }
+                
+                self.retryCount += 1
+                self.tryInjectToken()
+            }
+        }
+    }
+    
+    private func tryInjectToken() {
+        guard let token = fcmToken else { return }
+        
+        DispatchQueue.main.async {
+            if let bridge = (UIApplication.shared.delegate as? AppDelegate)?.window?.rootViewController as? CAPBridgeViewController,
+               let webView = bridge.webView {
+                
+                // Check if __registerFCMToken is defined
+                webView.evaluateJavaScript("typeof window.__registerFCMToken === 'function'") { result, error in
+                    if let isDefined = result as? Bool, isDefined {
+                        // Function exists, inject token
+                        let js = "window.__registerFCMToken('\(token.replacingOccurrences(of: "'", with: "\\'"))');"
+                        webView.evaluateJavaScript(js) { result, error in
+                            if let error = error {
+                                print("❌ Error injecting FCM token: \(error)")
+                            } else {
+                                print("✅ FCM token injected successfully (retry \(self.retryCount))")
+                                self.retryTimer?.invalidate()
+                            }
+                        }
+                    } else {
+                        print("⏳ Waiting for __registerFCMToken to be defined (retry \(self.retryCount))...")
+                    }
+                }
+            } else {
+                print("⏳ WebView not ready yet (retry \(self.retryCount))...")
             }
         }
     }
