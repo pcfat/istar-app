@@ -13,13 +13,8 @@
     <key>uploadSymbols</key>
     <true/>
     <key>signingStyle</key>
-    <string>manual</string>
+    <string>automatic</string>
     <key>signingCertificate</key>
     <string>iPhone Distribution</string>
-    <key>provisioningProfiles</key>
-    <dict>
-        <key>hk.istars.s</key>
-        <string>d24c682f-9df7-40b9-bf6f-b70271c1b51e</string>
-    </dict>
 </dict>
 </plist>
