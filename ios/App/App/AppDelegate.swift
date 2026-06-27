@@ -2,9 +2,10 @@ import UIKit
 import Capacitor
 import FirebaseCore
 import FirebaseMessaging
+import UserNotifications
 
 @UIApplicationMain
-class AppDelegate: UIResponder, UIApplicationDelegate {
+class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterDelegate, MessagingDelegate {
 
     var window: UIWindow?
     var fcmToken: String?
@@ -25,13 +26,52 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             return true
         }
         
-        // Get FCM token and inject to WebView (similar to Android MainActivity)
-        // Use retry mechanism to ensure WebView is ready
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
-            self.injectFCMToken()
+        // Set FCM delegate
+        Messaging.messaging().delegate = self
+        
+        // Request push notification permission (required for APNs token)
+        UNUserNotificationCenter.current().delegate = self
+        let authOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
+        UNUserNotificationCenter.current().requestAuthorization(options: authOptions) { granted, error in
+            DispatchQueue.main.async {
+                if granted {
+                    self.showAlert("Push permission granted ✅")
+                    // Register for remote notifications (get APNs token)
+                    application.registerForRemoteNotifications()
+                } else {
+                    self.showAlert("Push permission denied ❌\n\(error?.localizedDescription ?? "User declined")")
+                }
+            }
         }
         
         return true
+    }
+    
+    // APNs token received
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        let tokenParts = deviceToken.map { data in String(format: "%02.2hhx", data) }
+        let token = tokenParts.joined()
+        showAlert("APNs token received ✅\n\(String(token.prefix(20)))...")
+        
+        // Pass APNs token to Firebase
+        Messaging.messaging().apnsToken = deviceToken
+        
+        // Now get FCM token
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            self.injectFCMToken()
+        }
+    }
+    
+    // APNs registration failed
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        showAlert("APNs registration failed ❌\n\(error.localizedDescription)")
+    }
+    
+    // FCM token refresh callback
+    func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
+        guard let token = fcmToken else { return }
+        print("FCM token refreshed: \(String(token.prefix(20)))...")
+        self.fcmToken = token
     }
     
     private func showAlert(_ message: String) {
@@ -123,6 +163,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 }
             }
         }
+    }
+    
+    // Handle foreground notifications
+    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        completionHandler([[.banner, .sound]])
+    }
+    
+    // Handle notification tap
+    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
+        let userInfo = response.notification.request.content.userInfo
+        print("Notification tapped:", userInfo)
+        completionHandler()
     }
 
     func applicationWillResignActive(_ application: UIApplication) {
