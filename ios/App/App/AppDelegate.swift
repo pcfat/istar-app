@@ -12,8 +12,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var retryTimer: Timer?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        
+        // Debug alert: App started
+        showAlert("App started 🚀")
+        
         // Initialize Firebase (required for FCM)
-        FirebaseApp.configure()
+        do {
+            FirebaseApp.configure()
+            showAlert("Firebase initialized ✅")
+        } catch {
+            showAlert("Firebase init failed ❌\n\(error.localizedDescription)")
+            return true
+        }
         
         // Get FCM token and inject to WebView (similar to Android MainActivity)
         // Use retry mechanism to ensure WebView is ready
@@ -24,20 +34,40 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         return true
     }
     
+    private func showAlert(_ message: String) {
+        DispatchQueue.main.async {
+            guard let topController = UIApplication.shared.windows.first?.rootViewController else { return }
+            
+            let alert = UIAlertController(title: "Debug", message: message, preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            
+            // Find the topmost view controller
+            var presentingController = topController
+            while let presented = presentingController.presentedViewController {
+                presentingController = presented
+            }
+            
+            presentingController.present(alert, animated: true)
+        }
+    }
+    
     private func injectFCMToken() {
+        showAlert("Getting FCM token...")
+        
         Messaging.messaging().token { token, error in
             if let error = error {
-                print("❌ Error fetching FCM token: \(error)")
+                self.showAlert("FCM token error ❌\n\(error.localizedDescription)")
                 return
             }
             
             guard let token = token else {
-                print("❌ No FCM token available")
+                self.showAlert("No FCM token ❌")
                 return
             }
             
             self.fcmToken = token
-            print("✅ FCM Token received: \(String(token.prefix(20)))...")
+            let shortToken = String(token.prefix(20))
+            self.showAlert("FCM Token received ✅\n\(shortToken)...")
             
             // Try to inject immediately
             self.tryInjectToken()
@@ -50,7 +80,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 }
                 
                 if self.retryCount >= 10 {
-                    print("❌ Failed to inject FCM token after 10 retries")
+                    self.showAlert("Failed to inject after 10 retries ❌")
                     timer.invalidate()
                     return
                 }
@@ -75,18 +105,22 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                         let js = "window.__registerFCMToken('\(token.replacingOccurrences(of: "'", with: "\\'"))');"
                         webView.evaluateJavaScript(js) { result, error in
                             if let error = error {
-                                print("❌ Error injecting FCM token: \(error)")
+                                self.showAlert("Inject error ❌\n\(error.localizedDescription)")
                             } else {
-                                print("✅ FCM token injected successfully (retry \(self.retryCount))")
+                                self.showAlert("Token injected ✅\nRetry: \(self.retryCount)")
                                 self.retryTimer?.invalidate()
                             }
                         }
                     } else {
-                        print("⏳ Waiting for __registerFCMToken to be defined (retry \(self.retryCount))...")
+                        if self.retryCount == 0 {
+                            self.showAlert("Waiting for WebView...\nRetry \(self.retryCount)")
+                        }
                     }
                 }
             } else {
-                print("⏳ WebView not ready yet (retry \(self.retryCount))...")
+                if self.retryCount == 0 {
+                    self.showAlert("WebView not ready...\nRetry \(self.retryCount)")
+                }
             }
         }
     }
