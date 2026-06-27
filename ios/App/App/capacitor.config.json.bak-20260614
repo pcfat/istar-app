@@ -1,0 +1,40 @@
+{
+	"appId": "hk.istars.s",
+	"appName": "星進教育 i-STAR Education",
+	"webDir": "www",
+	"server": {
+		"url": "https://s.istars.hk/app/index.php",
+		"cleartext": false
+	},
+	"android": {
+		"allowMixedContent": false,
+		"captureInput": true,
+		"webContentsDebuggingEnabled": false,
+		"backgroundColor": "#FFFFFF",
+		"overrideUserAgent": "iSTAR-App/1.0 Android"
+	},
+	"ios": {
+		"contentInset": "automatic",
+		"backgroundColor": "#FFFFFF",
+		"overrideUserAgent": "iSTAR-App/1.0 iOS"
+	},
+	"plugins": {
+		"CapacitorCookies": {
+			"enabled": false
+		},
+		"SplashScreen": {
+			"launchShowDuration": 0,
+			"launchAutoHide": true,
+			"backgroundColor": "#FFFFFF",
+			"androidSplashResourceName": "splash",
+			"showSpinner": false
+		},
+		"StatusBar": {
+			"style": "DARK",
+			"backgroundColor": "#FFFFFF"
+		}
+	},
+	"packageClassList": [
+		"FirebaseMessagingPlugin"
+	]
+}
