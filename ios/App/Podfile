@@ -1,0 +1,9 @@
+platform :ios, '15.0'
+
+use_frameworks!
+
+target 'App' do
+  # Firebase pods - only for FCM token, no initialization in AppDelegate
+  pod 'Firebase/Core'
+  pod 'Firebase/Messaging'
+end
