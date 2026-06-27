@@ -109,60 +109,56 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
             let shortToken = String(token.prefix(20))
             self.showAlert("FCM Token received ✅\n\(shortToken)...")
             
-            // Try to inject immediately
-            self.tryInjectToken()
-            
-            // Also setup retry timer
-            self.retryTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] timer in
-                guard let self = self else {
-                    timer.invalidate()
-                    return
-                }
-                
-                if self.retryCount >= 10 {
-                    self.showAlert("Failed to inject after 10 retries ❌")
-                    timer.invalidate()
-                    return
-                }
-                
-                self.retryCount += 1
-                self.tryInjectToken()
-            }
+            // Directly POST token to server (skip WebView injection)
+            self.registerTokenWithServer(token: token)
         }
     }
     
-    private func tryInjectToken() {
-        guard let token = fcmToken else { return }
+    private func registerTokenWithServer(token: String) {
+        showAlert("Registering token with server...")
         
-        DispatchQueue.main.async {
-            if let bridge = (UIApplication.shared.delegate as? AppDelegate)?.window?.rootViewController as? CAPBridgeViewController,
-               let webView = bridge.webView {
-                
-                // Check if __registerFCMToken is defined
-                webView.evaluateJavaScript("typeof window.__registerFCMToken === 'function'") { result, error in
-                    if let isDefined = result as? Bool, isDefined {
-                        // Function exists, inject token
-                        let js = "window.__registerFCMToken('\(token.replacingOccurrences(of: "'", with: "\\'"))');"
-                        webView.evaluateJavaScript(js) { result, error in
-                            if let error = error {
-                                self.showAlert("Inject error ❌\n\(error.localizedDescription)")
-                            } else {
-                                self.showAlert("Token injected ✅\nRetry: \(self.retryCount)")
-                                self.retryTimer?.invalidate()
-                            }
-                        }
-                    } else {
-                        if self.retryCount == 0 {
-                            self.showAlert("Waiting for WebView...\nRetry \(self.retryCount)")
-                        }
-                    }
+        guard let url = URL(string: "https://s.istars.hk/app/api/register_fcm_token.php") else {
+            showAlert("Invalid server URL ❌")
+            return
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let body: [String: Any] = [
+            "fcm_token": token,
+            "device_type": "ios"
+        ]
+        
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        } catch {
+            showAlert("Failed to encode request ❌\n\(error.localizedDescription)")
+            return
+        }
+        
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    self.showAlert("Server request failed ❌\n\(error.localizedDescription)")
+                    return
                 }
-            } else {
-                if self.retryCount == 0 {
-                    self.showAlert("WebView not ready...\nRetry \(self.retryCount)")
+                
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    self.showAlert("Invalid server response ❌")
+                    return
+                }
+                
+                if httpResponse.statusCode == 200 {
+                    self.showAlert("Token registered ✅\nServer returned 200 OK")
+                } else {
+                    self.showAlert("Server error ❌\nStatus code: \(httpResponse.statusCode)")
                 }
             }
         }
+        
+        task.resume()
     }
     
     // Handle foreground notifications
