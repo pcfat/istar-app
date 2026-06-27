@@ -83,8 +83,6 @@ jobs:
             -configuration Release \
             -archivePath $PWD/build/App.xcarchive \
             -allowProvisioningUpdates \
-            CODE_SIGN_STYLE=Automatic \
-            CODE_SIGN_IDENTITY="iPhone Distribution" \
             DEVELOPMENT_TEAM=V7S7U9U663
             
       - name: Export IPA

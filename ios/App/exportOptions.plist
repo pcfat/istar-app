@@ -14,7 +14,5 @@
     <true/>
     <key>signingStyle</key>
     <string>automatic</string>
-    <key>signingCertificate</key>
-    <string>iPhone Distribution</string>
 </dict>
 </plist>
