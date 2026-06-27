@@ -10,13 +10,24 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        // Delay Firebase initialization to avoid conflicts with Capacitor
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+            self.initializeFirebase(application: application)
+        }
+        
+        return true
+    }
+    
+    private func initializeFirebase(application: UIApplication) {
         // Initialize Firebase with error handling
         do {
             if FirebaseApp.app() == nil {
                 FirebaseApp.configure()
+                print("Firebase configured successfully")
             }
         } catch {
             print("Firebase configuration failed: \(error.localizedDescription)")
+            return
         }
         
         // Set up push notifications
@@ -35,8 +46,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
                 }
             }
         }
-        
-        return true
     }
 
     func applicationWillResignActive(_ application: UIApplication) {
