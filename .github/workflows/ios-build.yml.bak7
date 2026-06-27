@@ -70,11 +70,6 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/build.mobileprovision
           
-      - name: Resolve Swift Package Dependencies
-        run: |
-          cd ios/App
-          xcodebuild -resolvePackageDependencies -project App.xcodeproj -scheme App
-          
       - name: Build and Archive
         run: |
           # Clean derived data and build folder to force Assets recompile
