@@ -5,54 +5,10 @@ import Capacitor
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
-    private var refreshControl: UIRefreshControl?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Setup pull-to-refresh after window is ready
-        DispatchQueue.main.async { [weak self] in
-            self?.setupPullToRefresh()
-        }
+        // Register custom navigation interceptor
         return true
-    }
-    
-    private func setupPullToRefresh() {
-        guard let window = window,
-              let rootVC = window.rootViewController as? CAPBridgeViewController,
-              let webView = rootVC.webView else {
-            return
-        }
-        
-        let refresh = UIRefreshControl()
-        refresh.tintColor = UIColor(red: 0.1, green: 0.67, blue: 0.88, alpha: 1.0) // #1AABE0
-        refresh.addTarget(self, action: #selector(handleRefresh(_:)), for: .valueChanged)
-        
-        // Adjust spinner position (move down by 60pt to be visible)
-        refresh.bounds = CGRect(x: refresh.bounds.origin.x,
-                               y: 60,
-                               width: refresh.bounds.size.width,
-                               height: refresh.bounds.size.height)
-        
-        webView.scrollView.addSubview(refresh)
-        webView.scrollView.bounces = true
-        
-        refreshControl = refresh
-    }
-    
-    @objc private func handleRefresh(_ sender: UIRefreshControl) {
-        guard let window = window,
-              let rootVC = window.rootViewController as? CAPBridgeViewController,
-              let webView = rootVC.webView else {
-            sender.endRefreshing()
-            return
-        }
-        
-        // Use JavaScript to reload in-app (避免彈出 browser)
-        webView.evaluateJavaScript("window.location.reload();", completionHandler: nil)
-        
-        // Hide refresh control after 1.2 seconds
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-            sender.endRefreshing()
-        }
     }
 
     func applicationWillResignActive(_ application: UIApplication) {
