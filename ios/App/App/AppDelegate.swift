@@ -163,6 +163,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     
     // Handle foreground notifications
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        let title = notification.request.content.title
+        let body = notification.request.content.body
+        showAlert("📬 Push received!\n\(title)\n\(body)")
         completionHandler([[.banner, .sound]])
     }
     
@@ -170,6 +173,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
         let userInfo = response.notification.request.content.userInfo
         print("Notification tapped:", userInfo)
+        showAlert("🔔 Notification tapped!")
         completionHandler()
     }
 
