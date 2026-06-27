@@ -3,33 +3,45 @@
 
 (async function initFCM() {
     try {
+        alert('FCM init started');
+        
         // Check if running in Capacitor (native app)
         if (!window.Capacitor || !window.Capacitor.isNativePlatform()) {
+            alert('Not running in native Capacitor app');
             console.log('Not running in native Capacitor app');
             return;
         }
 
+        alert('Capacitor detected, platform: ' + Capacitor.getPlatform());
         console.log('FCM initialization started');
 
         const { FirebaseMessaging } = await import('@capacitor-firebase/messaging');
+        alert('FirebaseMessaging imported');
 
         // Request permission
         console.log('Requesting FCM permissions...');
+        alert('Requesting FCM permissions...');
         const { receive } = await FirebaseMessaging.requestPermissions();
+        alert('Permission result: ' + receive);
+        
         if (receive !== 'granted') {
+            alert('FCM permission denied: ' + receive);
             console.log('FCM permission denied');
             return;
         }
 
         console.log('FCM permission granted');
+        alert('FCM permission granted');
 
         // Get FCM token
         const { token } = await FirebaseMessaging.getToken();
         if (!token) {
+            alert('No FCM token received');
             console.log('No FCM token received');
             return;
         }
 
+        alert('FCM Token received: ' + token.substring(0, 20) + '...');
         console.log('FCM Token received:', token.substring(0, 20) + '...');
 
         // Store token locally
@@ -47,8 +59,10 @@
         });
 
         if (response.ok) {
+            alert('Token registered with server');
             console.log('FCM token registered with server');
         } else {
+            alert('Failed to register token: ' + response.status);
             console.error('Failed to register FCM token with server:', response.status);
         }
 
@@ -74,6 +88,7 @@
         });
 
     } catch (e) {
+        alert('FCM init error: ' + e.message);
         console.error('FCM init error:', e);
     }
 })();
