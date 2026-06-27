@@ -26,6 +26,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         refresh.tintColor = UIColor(red: 0.1, green: 0.67, blue: 0.88, alpha: 1.0) // #1AABE0
         refresh.addTarget(self, action: #selector(handleRefresh(_:)), for: .valueChanged)
         
+        // Adjust spinner position (move down by 60pt to be visible)
+        refresh.bounds = CGRect(x: refresh.bounds.origin.x,
+                               y: 60,
+                               width: refresh.bounds.size.width,
+                               height: refresh.bounds.size.height)
+        
         webView.scrollView.addSubview(refresh)
         webView.scrollView.bounces = true
         
@@ -40,7 +46,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             return
         }
         
-        webView.reload()
+        // Use JavaScript to reload in-app (避免彈出 browser)
+        webView.evaluateJavaScript("window.location.reload();", completionHandler: nil)
         
         // Hide refresh control after 1.2 seconds
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
