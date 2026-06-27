@@ -33,15 +33,10 @@ jobs:
           cp assets/splash/splash-2732x2732.png ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732-2.png
           echo "Custom splash screens restored"
           
-      - name: Update bundle version
+      - name: Verify bundle version
         run: |
-          # Update project.pbxproj
-          sed -i '' 's/CURRENT_PROJECT_VERSION = [0-9]*;/CURRENT_PROJECT_VERSION = 131;/g' ios/App/App.xcodeproj/project.pbxproj
-          
-          # Update Info.plist
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion 131" ios/App/App/Info.plist
-          
-          echo "Bundle version updated to 131"
+          # Just verify the version that was committed
+          echo "Bundle version from commit:"
           grep "CURRENT_PROJECT_VERSION" ios/App/App.xcodeproj/project.pbxproj | head -2
           grep -A 1 "CFBundleVersion" ios/App/App/Info.plist | head -2
           
