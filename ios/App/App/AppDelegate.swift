@@ -164,7 +164,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         let title = notification.request.content.title
         let body = notification.request.content.body
         showAlert("📬 \(title)\n\(body)")
-        completionHandler([[.banner, .sound]])
+        // Only sound, no banner (our alert will show instead)
+        completionHandler([[.sound]])
     }
     
     // Handle notification tap
