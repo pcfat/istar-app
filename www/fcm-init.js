@@ -9,8 +9,21 @@
             return;
         }
 
-        const platform = window.Capacitor.getPlatform(); // 'ios' or 'android'
-        alert('DEBUG: Platform detected = ' + platform);
+        // More accurate platform detection
+        let platform = 'unknown';
+        const capacitorPlatform = window.Capacitor.getPlatform();
+        const userAgent = navigator.userAgent.toLowerCase();
+        
+        // Check user agent as backup
+        if (capacitorPlatform === 'ios' || userAgent.includes('iphone') || userAgent.includes('ipad')) {
+            platform = 'ios';
+        } else if (capacitorPlatform === 'android' || userAgent.includes('android')) {
+            platform = 'android';
+        } else {
+            platform = capacitorPlatform; // fallback to Capacitor detection
+        }
+        
+        alert('DEBUG: Platform detected = ' + platform + ' (Capacitor=' + capacitorPlatform + ', UA=' + (userAgent.includes('android') ? 'android' : userAgent.includes('iphone') ? 'ios' : 'other') + ')');
 
         const { FirebaseMessaging } = await import('@capacitor-firebase/messaging');
         alert('DEBUG: FirebaseMessaging imported successfully');
