@@ -75,6 +75,13 @@
         // Listen for foreground messages
         FirebaseMessaging.addListener('notificationReceived', (notification) => {
             console.log('FCM: Foreground notification:', notification);
+            // Show alert for foreground notifications
+            if (notification.notification) {
+                const { title, body } = notification.notification;
+                if (title || body) {
+                    alert((title || '') + '\n' + (body || ''));
+                }
+            }
         });
 
         // Handle notification tap
