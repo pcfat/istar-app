@@ -71,23 +71,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         self.fcmToken = token
     }
     
-    private func showAlert(_ message: String) {
-        DispatchQueue.main.async {
-            guard let topController = UIApplication.shared.windows.first?.rootViewController else { return }
-            
-            let alert = UIAlertController(title: "Debug", message: message, preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "OK", style: .default))
-            
-            // Find the topmost view controller
-            var presentingController = topController
-            while let presented = presentingController.presentedViewController {
-                presentingController = presented
-            }
-            
-            presentingController.present(alert, animated: true)
-        }
-    }
-    
     private func injectFCMToken() {
         print("Getting FCM token...")
         
