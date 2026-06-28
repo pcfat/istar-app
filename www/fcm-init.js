@@ -5,7 +5,7 @@
     try {
         // Check if running in Capacitor (native app)
         if (!window.Capacitor || !window.Capacitor.isNativePlatform()) {
-            alert('DEBUG: Not running in Capacitor native app');
+            console.log('FCM: Not running in Capacitor native app');
             return;
         }
 
@@ -23,36 +23,34 @@
             platform = capacitorPlatform; // fallback to Capacitor detection
         }
         
-        alert('DEBUG: Platform detected = ' + platform + ' (Capacitor=' + capacitorPlatform + ', UA=' + (userAgent.includes('android') ? 'android' : userAgent.includes('iphone') ? 'ios' : 'other') + ')');
+        console.log('FCM: Platform detected =', platform, '(Capacitor=' + capacitorPlatform + ', UA=' + (userAgent.includes('android') ? 'android' : userAgent.includes('iphone') ? 'ios' : 'other') + ')');
 
         const { FirebaseMessaging } = await import('@capacitor-firebase/messaging');
-        alert('DEBUG: FirebaseMessaging imported successfully');
+        console.log('FCM: FirebaseMessaging imported successfully');
 
         // Request permission
-        alert('DEBUG: Requesting FCM permissions...');
+        console.log('FCM: Requesting permissions...');
         const { receive } = await FirebaseMessaging.requestPermissions();
-        alert('DEBUG: Permission result = ' + receive);
+        console.log('FCM: Permission result =', receive);
         
         if (receive !== 'granted') {
-            alert('DEBUG: FCM permission denied! receive=' + receive);
-            console.log('FCM permission denied');
+            console.log('FCM: Permission denied');
             return;
         }
 
         // Get FCM token
-        alert('DEBUG: Getting FCM token...');
+        console.log('FCM: Getting token...');
         const { token } = await FirebaseMessaging.getToken();
         
         if (!token) {
-            alert('DEBUG: Failed to get FCM token! token is empty');
+            console.log('FCM: Failed to get token');
             return;
         }
 
-        alert('DEBUG: FCM Token received! First 30 chars: ' + token.substring(0, 30));
-        console.log('FCM Token:', token.substring(0, 20) + '...');
+        console.log('FCM: Token received! First 30 chars:', token.substring(0, 30));
 
         // Register token with server
-        alert('DEBUG: Sending token to server... device_type=' + platform);
+        console.log('FCM: Sending token to server... device_type=' + platform);
         const response = await fetch('/app/api/register_fcm_token.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -64,24 +62,21 @@
         });
 
         const responseText = await response.text();
-        alert('DEBUG: Server response status=' + response.status + ' body=' + responseText.substring(0, 100));
+        console.log('FCM: Server response status=' + response.status, 'body=' + responseText.substring(0, 100));
 
         // Listen for foreground messages
         FirebaseMessaging.addListener('notificationReceived', (notification) => {
-            alert('DEBUG: FCM foreground notification received!');
-            console.log('FCM foreground notification:', notification);
+            console.log('FCM: Foreground notification received!', notification);
         });
 
         // Handle notification tap
         FirebaseMessaging.addListener('notificationActionPerformed', (action) => {
-            alert('DEBUG: FCM notification tapped!');
-            console.log('FCM notification tapped:', action);
+            console.log('FCM: Notification tapped!', action);
         });
 
-        alert('DEBUG: FCM initialization completed successfully!');
+        console.log('FCM: Initialization completed successfully!');
 
     } catch (e) {
-        alert('DEBUG: FCM init error! ' + e.message);
-        console.warn('FCM init error:', e);
+        console.error('FCM init error:', e);
     }
 })();
