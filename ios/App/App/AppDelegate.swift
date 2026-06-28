@@ -158,11 +158,29 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         task.resume()
     }
     
+    // Show alert helper (only for foreground notifications)
+    private func showAlert(_ message: String) {
+        DispatchQueue.main.async {
+            guard let topController = UIApplication.shared.windows.first?.rootViewController else { return }
+            
+            let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            
+            // Find the topmost view controller
+            var presentingController = topController
+            while let presented = presentingController.presentedViewController {
+                presentingController = presented
+            }
+            
+            presentingController.present(alert, animated: true)
+        }
+    }
+    
     // Handle foreground notifications
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
         let title = notification.request.content.title
         let body = notification.request.content.body
-        showAlert("📬 Push received!\n\(title)\n\(body)")
+        showAlert("📬 \(title)\n\(body)")
         completionHandler([[.banner, .sound]])
     }
     
