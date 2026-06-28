@@ -14,15 +14,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         
-        // Debug alert: App started
-        showAlert("App started 🚀")
-        
         // Initialize Firebase (required for FCM)
         do {
             FirebaseApp.configure()
-            showAlert("Firebase initialized ✅")
+            print("Firebase initialized")
         } catch {
-            showAlert("Firebase init failed ❌\n\(error.localizedDescription)")
+            print("Firebase init failed: \(error.localizedDescription)")
             return true
         }
         
@@ -35,11 +32,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         UNUserNotificationCenter.current().requestAuthorization(options: authOptions) { granted, error in
             DispatchQueue.main.async {
                 if granted {
-                    self.showAlert("Push permission granted ✅")
+                    print("Push permission granted")
                     // Register for remote notifications (get APNs token)
                     application.registerForRemoteNotifications()
                 } else {
-                    self.showAlert("Push permission denied ❌\n\(error?.localizedDescription ?? "User declined")")
+                    print("Push permission denied: \(error?.localizedDescription ?? "User declined")")
                 }
             }
         }
@@ -51,7 +48,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
         let tokenParts = deviceToken.map { data in String(format: "%02.2hhx", data) }
         let token = tokenParts.joined()
-        showAlert("APNs token received ✅\n\(String(token.prefix(20)))...")
+        print("APNs token received: \(String(token.prefix(20)))...")
         
         // Pass APNs token to Firebase
         Messaging.messaging().apnsToken = deviceToken
@@ -64,7 +61,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     
     // APNs registration failed
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
-        showAlert("APNs registration failed ❌\n\(error.localizedDescription)")
+        print("APNs registration failed: \(error.localizedDescription)")
     }
     
     // FCM token refresh callback
@@ -92,22 +89,22 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     }
     
     private func injectFCMToken() {
-        showAlert("Getting FCM token...")
+        print("Getting FCM token...")
         
         Messaging.messaging().token { token, error in
             if let error = error {
-                self.showAlert("FCM token error ❌\n\(error.localizedDescription)")
+                print("FCM token error: \(error.localizedDescription)")
                 return
             }
             
             guard let token = token else {
-                self.showAlert("No FCM token ❌")
+                print("No FCM token")
                 return
             }
             
             self.fcmToken = token
             let shortToken = String(token.prefix(20))
-            self.showAlert("FCM Token received ✅\n\(shortToken)...")
+            print("FCM Token received: \(shortToken)...")
             
             // Directly POST token to server (skip WebView injection)
             self.registerTokenWithServer(token: token)
@@ -115,10 +112,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     }
     
     private func registerTokenWithServer(token: String) {
-        showAlert("Registering token with server...")
+        print("Registering token with server...")
         
         guard let url = URL(string: "https://s.istars.hk/app/api/register_fcm_token.php") else {
-            showAlert("Invalid server URL ❌")
+            print("Invalid server URL")
             return
         }
         
@@ -134,26 +131,26 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         do {
             request.httpBody = try JSONSerialization.data(withJSONObject: body)
         } catch {
-            showAlert("Failed to encode request ❌\n\(error.localizedDescription)")
+            print("Failed to encode request: \(error.localizedDescription)")
             return
         }
         
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             DispatchQueue.main.async {
                 if let error = error {
-                    self.showAlert("Server request failed ❌\n\(error.localizedDescription)")
+                    print("Server request failed: \(error.localizedDescription)")
                     return
                 }
                 
                 guard let httpResponse = response as? HTTPURLResponse else {
-                    self.showAlert("Invalid server response ❌")
+                    print("Invalid server response")
                     return
                 }
                 
                 if httpResponse.statusCode == 200 {
-                    self.showAlert("Token registered ✅\nServer returned 200 OK")
+                    print("Token registered. Server returned 200 OK")
                 } else {
-                    self.showAlert("Server error ❌\nStatus code: \(httpResponse.statusCode)")
+                    print("Server error. Status code: \(httpResponse.statusCode)")
                 }
             }
         }
@@ -173,7 +170,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
         let userInfo = response.notification.request.content.userInfo
         print("Notification tapped:", userInfo)
-        showAlert("🔔 Notification tapped!")
         completionHandler()
     }
 
