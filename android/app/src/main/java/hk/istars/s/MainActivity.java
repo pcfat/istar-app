@@ -1,13 +1,6 @@
 package hk.istars.s;
 
 import android.annotation.SuppressLint;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -24,17 +17,15 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
-import android.widget.Toast;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
-import androidx.core.content.ContextCompat;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.net.Uri;
 import com.getcapacitor.BridgeActivity;
-import com.google.firebase.messaging.FirebaseMessaging;
 
 public class MainActivity extends BridgeActivity {
 
-    private ActivityResultLauncher<String> notificationPermissionLauncher;
     private WebView webView;
     private float touchStartY = 0;
     private boolean isPulling = false;
@@ -46,20 +37,6 @@ public class MainActivity extends BridgeActivity {
     @SuppressLint("SetJavaScriptEnabled")
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        notificationPermissionLauncher = registerForActivityResult(
-            new ActivityResultContracts.RequestPermission(),
-            granted -> {}
-        );
-
-        createNotificationChannel();
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS)
-                    != PackageManager.PERMISSION_GRANTED) {
-                notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS);
-            }
-        }
 
         webView = getBridge().getWebView();
         if (webView != null) {
@@ -77,7 +54,7 @@ public class MainActivity extends BridgeActivity {
             // Create pull-to-refresh indicator
             webView.post(() -> {
                 ViewGroup rootView = (ViewGroup) webView.getRootView();
-                
+
                 // Create container with background
                 pullRefreshContainer = new FrameLayout(this);
                 FrameLayout.LayoutParams containerParams = new FrameLayout.LayoutParams(140, 140);
@@ -85,7 +62,7 @@ public class MainActivity extends BridgeActivity {
                 containerParams.topMargin = 100;
                 pullRefreshContainer.setLayoutParams(containerParams);
                 pullRefreshContainer.setAlpha(0f);
-                
+
                 // Set white circular background
                 android.graphics.drawable.GradientDrawable background = new android.graphics.drawable.GradientDrawable();
                 background.setShape(android.graphics.drawable.GradientDrawable.OVAL);
@@ -93,7 +70,7 @@ public class MainActivity extends BridgeActivity {
                 background.setStroke(1, 0xFFE0E0E0);
                 pullRefreshContainer.setBackground(background);
                 pullRefreshContainer.setElevation(8);
-                
+
                 // Create progress indicator
                 pullRefreshIndicator = new ProgressBar(this);
                 pullRefreshIndicator.setIndeterminate(true);
@@ -101,22 +78,18 @@ public class MainActivity extends BridgeActivity {
                 FrameLayout.LayoutParams progressParams = new FrameLayout.LayoutParams(100, 100);
                 progressParams.gravity = Gravity.CENTER;
                 pullRefreshIndicator.setLayoutParams(progressParams);
-                
+
                 pullRefreshContainer.addView(pullRefreshIndicator);
-                
+
                 if (rootView instanceof FrameLayout) {
                     ((FrameLayout) rootView).addView(pullRefreshContainer);
                 }
             });
 
-            checkBatteryOptimization();
-
             webView.setWebViewClient(new WebViewClient() {
                 @Override
                 public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
                     super.onPageStarted(view, url, favicon);
-                    // injectLSToken(view, url);  // Disabled: causing reload loop
-                    injectFcmToken(view);
                 }
 
                 @Override
@@ -141,29 +114,6 @@ public class MainActivity extends BridgeActivity {
                 }
             });
         }
-
-        FirebaseMessaging.getInstance().getToken()
-            .addOnCompleteListener(task -> {
-                if (!task.isSuccessful() || task.getResult() == null) return;
-                final String token = task.getResult().replace("'", "\\'");
-                Handler h = new Handler(getMainLooper());
-                Runnable inject = new Runnable() {
-                    int attempts = 0;
-                    @Override
-                    public void run() {
-                        attempts++;
-                        if (webView != null) {
-                            String js = "if(typeof window.__registerFCMToken==='function'){window.__registerFCMToken('" + token + "');}";
-                            webView.evaluateJavascript(js, result -> {
-                                if ((result == null || result.equals("null") || result.equals("undefined")) && attempts < 15) {
-                                    h.postDelayed(this, 2000);
-                                }
-                            });
-                        }
-                    }
-                };
-                h.postDelayed(inject, 5000);
-            });
     }
 
     @Override
@@ -177,7 +127,7 @@ public class MainActivity extends BridgeActivity {
         } else if (action == MotionEvent.ACTION_MOVE && webView != null) {
             float deltaY = y - touchStartY;
             int scrollY = webView.getScrollY();
-            
+
             if (scrollY <= 0 && deltaY > 0) {
                 float progress = Math.min(deltaY / PULL_THRESHOLD, 1.0f);
                 if (pullRefreshContainer != null) {
@@ -186,7 +136,7 @@ public class MainActivity extends BridgeActivity {
                     pullRefreshContainer.setScaleX(0.7f + progress * 0.3f);
                     pullRefreshContainer.setScaleY(0.7f + progress * 0.3f);
                 }
-                
+
                 if (deltaY > PULL_THRESHOLD && !isPulling) {
                     isPulling = true;
                 }
@@ -201,7 +151,7 @@ public class MainActivity extends BridgeActivity {
                     pullRefreshContainer.setAlpha(1.0f);
                 }
                 webView.reload();
-                
+
                 webView.postDelayed(() -> {
                     if (pullRefreshContainer != null) {
                         ObjectAnimator.ofFloat(pullRefreshContainer, "alpha", 1.0f, 0f).setDuration(300).start();
@@ -219,145 +169,5 @@ public class MainActivity extends BridgeActivity {
             isPulling = false;
         }
         return super.dispatchTouchEvent(ev);
-    }
-
-    private void injectLSToken(WebView view, String url) {
-        String js = "(function(){" +
-            "if(location.pathname.indexOf('logout')!==-1)return;" +
-            "var keys=['remember_token','student_remember_token','parent_remember_token'];" +
-            "var tok=null;" +
-            "keys.forEach(function(k){var v=localStorage.getItem(k);if(v&&!tok)tok=v;});" +
-            "if(tok&&!location.search.includes('ls_token=')){" +
-            "var newUrl=location.pathname+location.search+(location.search?'&':'?')+'ls_token='+tok;" +
-            "window.location.replace(newUrl);return;}" +
-            "})();";
-        view.evaluateJavascript(js, null);
-    }
-
-    private void checkBatteryOptimization() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
-            if (pm != null && !pm.isIgnoringBatteryOptimizations(getPackageName())) {
-                showBatteryOptimizationDialog();
-            }
-        }
-        detectAndPromptAutoStart();
-    }
-
-    private String getDeviceBrand() {
-        String manufacturer = Build.MANUFACTURER.toLowerCase();
-        String brand = Build.BRAND.toLowerCase();
-        if (brand.contains("xiaomi") || brand.contains("redmi") || manufacturer.contains("xiaomi")) return "xiaomi";
-        if (brand.contains("huawei") || brand.contains("honor") || manufacturer.contains("huawei")) return "huawei";
-        if (brand.contains("oppo") || brand.contains("realme") || manufacturer.contains("oppo")) return "oppo";
-        if (brand.contains("vivo") || manufacturer.contains("vivo")) return "vivo";
-        if (brand.contains("samsung") || manufacturer.contains("samsung")) return "samsung";
-        if (brand.contains("oneplus") || manufacturer.contains("oneplus")) return "oneplus";
-        if (brand.contains("sony") || manufacturer.contains("sony")) return "sony";
-        if (brand.contains("asus") || manufacturer.contains("asus")) return "asus";
-        if (brand.contains("google") || manufacturer.contains("google")) return "google";
-        return "generic";
-    }
-
-    private static final String PREFS_NAME = "istar_prefs";
-    private static final String KEY_AUTO_START_SHOWN = "auto_start_dialog_shown";
-    private static final String KEY_BATTERY_DIALOG_DISMISSED = "battery_dialog_dismissed";
-    private static final String KEY_BATTERY_DIALOG_NEVER = "battery_dialog_never";
-
-    private void detectAndPromptAutoStart() {
-        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        if (prefs.getBoolean(KEY_AUTO_START_SHOWN, false)) return;
-        String brand = getDeviceBrand();
-        if (brand.equals("google")) return; // Pixel 唔需要
-        showAutoStartDialog(brand);
-    }
-
-    private void showAutoStartDialog(String brand) {
-        String title = "開啟自啟動權限";
-        String message = "";
-        if (brand.equals("xiaomi")) {
-            message = "為確保推送通知正常運作，請開啟自啟動權限：\n\n1. 進入【設定】>【應用設置】\n2. 找到【星進教育 i-STAR】\n3. 點擊【自啟動】，開啟開關\n4. 返回 App";
-        } else if (brand.equals("huawei") || brand.equals("honor")) {
-            message = "為確保推送通知正常運作，請開啟自啟動權限：\n\n1. 進入【設定】>【電池】>【啟動管理】\n2. 找到【星進教育 i-STAR】\n3. 設為【允許自動運行】\n4. 返回 App";
-        } else if (brand.equals("oppo") || brand.equals("realme")) {
-            message = "為確保推送通知正常運作，請開啟自啟動權限：\n\n1. 進入【設定】>【電池】\n2. 點擊【耗電優化】\n3. 找到【星進教育 i-STAR】，設為【允許後台】\n4. 返回 App";
-        } else if (brand.equals("vivo")) {
-            message = "為確保推送通知正常運作，請開啟自啟動權限：\n\n1. 進入【設定】>【電池】>【高耗電提醒】\n2. 找到【星進教育 i-STAR】\n3. 開啟【允許後台運行】\n4. 返回 App";
-        } else if (brand.equals("samsung")) {
-            message = "為確保推送通知正常運作，請開啟自啟動權限：\n\n1. 進入【設定】>【電池】>【後台應用程式】\n2. 找到【星進教育 i-STAR】\n3. 設為【永不關閉】\n4. 返回 App";
-        } else if (brand.equals("oneplus")) {
-            message = "為確保推送通知正常運作，請開啟自啟動權限：\n\n1. 進入【設定】>【電池】>【電池優化】\n2. 找到【星進教育 i-STAR】\n3. 設為【不優化】\n4. 返回 App";
-        } else if (brand.equals("sony")) {
-            message = "為確保推送通知正常運作，請開啟自啟動權限：\n\n1. 進入【設定】>【電池】>【後台應用程式】\n2. 找到【星進教育 i-STAR】\n3. 開啟【允許後台運行】\n4. 返回 App";
-        } else if (brand.equals("asus")) {
-            message = "為確保推送通知正常運作，請開啟自啟動權限：\n\n1. 進入【設定】>【電池管理】>【後台應用程式】\n2. 找到【星進教育 i-STAR】\n3. 開啟允許\n4. 返回 App";
-        } else {
-            message = "為確保推送通知正常運作，請允許 App 在後台運行：\n\n1. 進入【設定】>【應用】\n2. 找到【星進教育 i-STAR】\n3. 設為【允許後台活動】或【不自優化】\n4. 返回 App";
-        }
-
-        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        new AlertDialog.Builder(this)
-            .setTitle(title)
-            .setMessage(message)
-            .setPositiveButton("設定", (dialog, which) -> {
-                prefs.edit().putBoolean(KEY_AUTO_START_SHOWN, true).apply();
-                Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                intent.setData(Uri.parse("package:" + getPackageName()));
-                startActivity(intent);
-            })
-            .setNeutralButton("稍後提醒", (dialog, which) -> {
-                prefs.edit().putBoolean(KEY_AUTO_START_SHOWN, false).apply();
-            })
-            .setNegativeButton("不再提醒", (dialog, which) -> {
-                prefs.edit().putBoolean(KEY_AUTO_START_SHOWN, true).apply();
-            })
-            .setCancelable(true)
-            .show();
-    }
-
-    private void showBatteryOptimizationDialog() {
-        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        if (prefs.getBoolean(KEY_BATTERY_DIALOG_NEVER, false)) return;
-        new AlertDialog.Builder(this)
-            .setTitle("需要關閉電池優化")
-            .setMessage("為確保 App 能夠正常接收推送通知，請進行以下設定：\n\n步驟：\n1. 點擊【設定】打開設定\n2. 找到【星進教育 i-STAR】\n3. 設定【無限制】或【不優化】\n4. 返回 App")
-            .setPositiveButton("設定", (dialog, which) -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
-                    intent.setData(Uri.parse("package:" + getPackageName()));
-                    startActivity(intent);
-                }
-            })
-            .setNeutralButton("稍後提醒", (dialog, which) -> {
-                prefs.edit().putBoolean(KEY_BATTERY_DIALOG_DISMISSED, true).apply();
-            })
-            .setNegativeButton("不再提醒", (dialog, which) -> {
-                prefs.edit().putBoolean(KEY_BATTERY_DIALOG_NEVER, true).apply();
-            })
-            .setCancelable(true)
-            .show();
-    }
-
-    private void injectFcmToken(WebView view) {
-        FirebaseMessaging.getInstance().getToken()
-            .addOnCompleteListener(task -> {
-                if (!task.isSuccessful() || task.getResult() == null) return;
-                String token = task.getResult().replace("'", "\\'");
-                String js = "if(typeof window.__registerFCMToken==='function'){window.__registerFCMToken('" + token + "');}";
-                view.post(() -> view.evaluateJavascript(js, null));
-            });
-    }
-
-    private void createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(
-                "istar_notifications", "星進教育通知", NotificationManager.IMPORTANCE_HIGH
-            );
-            channel.setDescription("星進教育 App 通知");
-            channel.enableLights(true);
-            channel.enableVibration(true);
-            NotificationManager manager = getSystemService(NotificationManager.class);
-            if (manager != null) manager.createNotificationChannel(channel);
-        }
     }
 }

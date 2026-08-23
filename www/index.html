@@ -43,12 +43,7 @@
         // This file is a fallback. The app should load from the server URL configured in capacitor.config.json
         // If you see this, Capacitor is working correctly and will load the remote content
         console.log('Capacitor app initialized');
-        
-        // Load push notification initialization
-        const script = document.createElement('script');
-        script.src = '/push-init.js';
-        document.head.appendChild(script);
-        
+
         // Redirect to the actual app page
         window.location.href = '/app/index.php';
     </script>
