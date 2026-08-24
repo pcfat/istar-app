@@ -104,6 +104,7 @@ jobs:
             -allowProvisioningUpdates
 
       - name: Upload to TestFlight
+        if: false
         env:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
@@ -117,6 +118,58 @@ jobs:
             --file ios/App/build/App.ipa \
             --apiKey "$APP_STORE_CONNECT_API_KEY_ID" \
             --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID"
+
+      - name: Upload to App Store Connect (modern API)
+        continue-on-error: true
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
+        run: |
+          set -x
+          # Check if secrets are set
+          if [ -z "$APP_STORE_CONNECT_API_KEY_ID" ]; then
+            echo "ERROR: APP_STORE_CONNECT_API_KEY_ID is empty"
+            exit 1
+          fi
+          if [ -z "$APP_STORE_CONNECT_ISSUER_ID" ]; then
+            echo "ERROR: APP_STORE_CONNECT_ISSUER_ID is empty"
+            exit 1
+          fi
+          if [ -z "$APP_STORE_CONNECT_API_KEY_BASE64" ]; then
+            echo "ERROR: APP_STORE_CONNECT_API_KEY_BASE64 is empty"
+            exit 1
+          fi
+          
+          # Create API key file
+          mkdir -p ~/.private_keys
+          echo "$APP_STORE_CONNECT_API_KEY_BASE64" | base64 --decode > ~/.private_keys/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8
+          
+          # Verify file was created
+          if [ ! -f ~/.private_keys/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8 ]; then
+            echo "ERROR: Failed to create API key file"
+            exit 1
+          fi
+          
+          echo "API key file created successfully"
+          ls -lh ~/.private_keys/
+          
+          # Try xcrun altool with verbose output
+          echo "Attempting upload with xcrun altool..."
+          xcrun altool --upload-app \
+            --type ios \
+            --file ios/App/build/App.ipa \
+            --apiKey "$APP_STORE_CONNECT_API_KEY_ID" \
+            --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" \
+            --verbose || {
+              echo "altool failed with exit code $?"
+              echo "Trying alternative method with notarytool..."
+              xcrun notarytool submit ios/App/build/App.ipa \
+                --key ~/.private_keys/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8 \
+                --key-id "$APP_STORE_CONNECT_API_KEY_ID" \
+                --issuer "$APP_STORE_CONNECT_ISSUER_ID" \
+                --wait || echo "notarytool also failed"
+            }
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
